@@ -55,6 +55,7 @@ export default function Authenticated({ user, header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
+                                    <Dropdown.Link href={route('broadcast.start')}>配信開始</Dropdown.Link>
                                         <Dropdown.Link href={route('profile.edit')}>プロフィール</Dropdown.Link>
                                         <Dropdown.Link href={route('logout')} method="post" as="button">
                                             ログアウト
