@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('broadcasts', function (Blueprint $table) {
-            $table->id('broadcast_id')->unique();
+            $table->id()->unique();
 
+            // broadcasts テーブルの外部キー関連付け
             $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('user_id')->on('users')->OnDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
 
             $table->string('room_names');
             $table->text('room_explain');
