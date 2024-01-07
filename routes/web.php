@@ -32,11 +32,6 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/broadcast', [BroadCastController::class, 'index']);
-Route::get('/broadcast/start', [BroadCastController::class, 'start']);
-Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down']);
-Route::get('/broadcast/{id}', [BroadCastController::class, 'toInsideRoom']);
-
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -48,3 +43,12 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/broadcast', [BroadCastController::class, 'index'])->name('broadcast.index');
+
+Route::get('/broadcast/start', function () {
+    return Inertia::render('Broadcast/NewRoom');
+})->name('broadcast.start');
+
+Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down'])->name('broadcast.down');
+Route::get('/broadcast/{id}', [BroadCastController::class, 'insideRoom'])->name('broadcast.insideRoom');;
