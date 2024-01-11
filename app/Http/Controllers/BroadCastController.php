@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Broadcast;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BroadCastController extends Controller
 {
-    //音声配信
+    //音声配信ルームについてのController
     public function index ()
     {
-        return \DB::table('broadcasts')->get();
+        //配信中の部屋のリストを取得する。broadcastsテーブルのbroadcasting_flagカラムが1のものが条件。
+        return \DB::table('broadcasts')->where('broadcasting_flag', 1)->get();
     }
 
     private function down(Request $request)
@@ -17,8 +22,17 @@ class BroadCastController extends Controller
 
     }
 
-    private function toInsideRoom(Request $request)
+    public function createRoom(Request $request)
     {
+        Inertia::render('Broadcast/NewRoom');
+        $register = new Broadcast;
+        $userId = $register->registerInfo($request);
+        return $this->insideRoom($userId);
+    }
 
+    public function insideRoom($userId)
+    {
+        $roomId = DB::table('broadcasts')->where('user_id', $userId)->first();
+        return redirect('/broadcast')->with('id', $roomId->id);
     }
 }

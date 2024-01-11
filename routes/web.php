@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\VideoCallController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BroadCastController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,13 +16,7 @@ use App\Http\Controllers\BroadCastController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-Route::prefix('video_call')->controller(VideoCallController::class)->group(function(){
-
-    Route::get('/', 'index')->name('broadcast.index');
-
-});
-
+Route::get('/', [BroadCastController::class, 'index']);
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -44,11 +38,14 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-Route::get('/broadcast', [BroadCastController::class, 'index'])->name('broadcast.index');
+Route::middleware('auth')->group(function () {
+    Route::get('/broadcast', [BroadCastController::class, 'index'])->name('broadcast.index');
 
-Route::get('/broadcast/start', function () {
-    return Inertia::render('Broadcast/NewRoom');
-})->name('broadcast.start');
+    Route::get('/broadcast/start', function () {
+        return Inertia::render('Broadcast/NewRoom');
+    })->name('broadcast.start');
 
-Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down'])->name('broadcast.down');
-Route::get('/broadcast/{id}', [BroadCastController::class, 'insideRoom'])->name('broadcast.insideRoom');;
+    Route::post('/broadcast/create', [BroadCastController::class, 'createRoom'])->name('broadcast.create');
+    Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down'])->name('broadcast.down');
+    Route::get('/broadcast/{id}', [BroadCastController::class, 'insideRoom'])->name('broadcast.insideRoom');
+});

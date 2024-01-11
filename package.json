@@ -8,9 +8,10 @@
     },
     "devDependencies": {
         "@headlessui/react": "^1.4.2",
+        "@inertiajs/inertia-react": "^0.8.1",
         "@inertiajs/react": "^1.0.0",
         "@tailwindcss/forms": "^0.5.3",
-        "@vitejs/plugin-react": "^4.2.0",
+        "@vitejs/plugin-react": "^4.2.1",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.1",
         "laravel-echo": "^1.15.3",
@@ -22,5 +23,10 @@
         "simple-peer": "^9.11.1",
         "tailwindcss": "^3.2.1",
         "vite": "^5.0.0"
+    },
+    "dependencies": {
+        "glob": "^10.3.10",
+        "react-monaco-editor": "^0.55.0",
+        "react-tabs": "^6.0.2"
     }
 }

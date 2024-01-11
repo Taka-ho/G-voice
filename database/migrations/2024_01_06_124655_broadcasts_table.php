@@ -15,15 +15,13 @@ return new class extends Migration
             $table->id()->unique();
 
             // broadcasts テーブルの外部キー関連付け
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->NotNull();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
-
-            $table->string('room_names');
+            $table->string('room_names')->NotNull();
             $table->text('room_explain');
             $table->string('source_code_of_users');
-            $table->integer('broadcasting_flag');
-            $table->timestamps();
+            $table->integer('broadcasting_flag')->NotNull();
+            $table->date('created_at');
         });
     }
 

@@ -2,7 +2,7 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import { Head } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function NewRoom() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -10,15 +10,9 @@ export default function NewRoom() {
         broadcastExplain: ''
     });
 
-    useEffect(() => {
-        return () => {
-            reset('password');
-        };
-    }, []);
-
     const submit = (e) => {
         e.preventDefault();
-        post(route('broadcast.insideRoom'));
+        post(route('broadcast.create'));
     };
     return (
         <GuestLayout>
@@ -38,20 +32,20 @@ export default function NewRoom() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="broadcast-explain" value="説明欄" />
+                    <InputLabel htmlFor="broadcastExplain" value="説明欄" />
 
                     <textarea
                         id="password"
-                        name="broadcast-explain"
+                        name="broadcastExplain"
                         className="mt-1 block w-full"
                         autoComplete="current-password"
                         placeholder='パスワード'
-                        onChange={(e) => setData('broadcast-explain', e.target.value)}
+                        onChange={(e) => setData('broadcastExplain', e.target.value)}
                     />
                 </div>
 
                 <div className="flex items-center justify-end mt-4">
-                    <PrimaryButton className="ms-4 bg-orange-600 hover:bg-orange-500">
+                    <PrimaryButton className="ms-4 bg-orange-600 hover:bg-orange-500" disabled={processing}>
                         配信を開始する
                     </PrimaryButton>
                 </div>
