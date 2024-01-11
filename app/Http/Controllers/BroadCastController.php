@@ -27,12 +27,17 @@ class BroadCastController extends Controller
         Inertia::render('Broadcast/NewRoom');
         $register = new Broadcast;
         $userId = $register->registerInfo($request);
-        return $this->insideRoom($userId);
+        return $this->goToRoom($userId);
+    }
+
+    public function goToRoom($userId)
+    {
+        $roomId = DB::table('broadcasts')->where('user_id', $userId)->first();
+        return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
 
     public function insideRoom($userId)
     {
-        $roomId = DB::table('broadcasts')->where('user_id', $userId)->first();
-        return redirect('/broadcast')->with('id', $roomId->id);
+        return Inertia::render('Broadcast/BroadcastRoom');
     }
 }

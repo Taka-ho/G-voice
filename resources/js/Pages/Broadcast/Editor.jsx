@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
-
-export default Editor = () => {
+export default function Editor() {
   return (    
     <Tabs>
       <TabList>
         {fileNames.map((fileName) => (
-          <Tab key={fileName}>{fileName}</Tab>
+          <Tab>{fileName}</Tab>
         ))}
       </TabList>
       {fileContents.map((content, index) => (
