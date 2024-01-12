@@ -17,7 +17,6 @@ export default async ({ command }) => {
         input: [
           'resources/css/app.css',
           'resources/js/app.jsx',
-          'resources/js/Broadcast/NewRoom.jsx'
         ],
         refresh: true,
       }),

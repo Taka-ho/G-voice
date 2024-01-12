@@ -2,25 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 export default function Editor() {
+  const fileName = 'App.js';
+  const fileContents = 'console.log("Hello World");';
   return (    
     <Tabs>
       <TabList>
-        {fileNames.map((fileName) => (
           <Tab>{fileName}</Tab>
-        ))}
       </TabList>
-      {fileContents.map((content, index) => (
-        <TabPanel key={fileNames[index]}>
+        <TabPanel key={fileName}>
           <div className='editor-space'>
             <MonacoEditor
               language="plaintext"
               theme="visual studio"
-              value={content}
+              value={fileContents}
             />
           </div>
-
-        </TabPanel>
-      ))}
+      </TabPanel>
     </Tabs>
   );
 };
