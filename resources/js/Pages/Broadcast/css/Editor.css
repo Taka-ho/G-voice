@@ -2,4 +2,12 @@
     margin-left: 5%;
   }
 
-  
+.Editor {
+  margin-right: 5px;
+  width: 50%;
+  border-right: 1px solid gray;
+}
+
+.monaco-editor {
+  width: 60%;
+}
