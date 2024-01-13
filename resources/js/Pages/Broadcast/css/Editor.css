@@ -1,13 +1,8 @@
-.title {
-    margin-left: 5%;
-  }
-
-.Editor {
-  margin-right: 5px;
-  width: 50%;
-  border-right: 1px solid gray;
+.editor-space {
+  height: 90vh;
+  margin: 0px;
 }
 
-.monaco-editor {
-  width: 60%;
+.terminal-title {
+  font-size: 15px;
 }
