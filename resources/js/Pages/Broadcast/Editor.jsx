@@ -49,22 +49,17 @@ const Editor = () => {
       </button>
       <Tabs onSelect={handleTabSelect}>
         <TabList>
-          {fileNames.map((fileName, index) => (
-            <Tab key={fileName}>{fileName}</Tab>
-          ))}
+            <Tab>app.js</Tab>
         </TabList>
-        {fileContents.map((item, index) => (
-          <TabPanel key={item.fileName} value={selectedFileName}>
+          <TabPanel value={selectedFileName}>
             <div className="editor-space">
               <MonacoEditor
                 language="javascript"
                 theme="vs"
-                value={item.content}
                 onChange={(newValue) => handleOnChange(newValue, index)}
               />
             </div>
           </TabPanel>
-        ))}
       </Tabs>
 
       </div>
