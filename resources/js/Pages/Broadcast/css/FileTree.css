@@ -1,37 +1,10 @@
-.FileTree {
-    font-family: sans-serif;
-    width: 300px;
-    border: solid 3px gainsboro;
-    height: 800px;
-    overflow: scroll;
-  }
-  
-.displayName {
-    font-size: 1rem;
-}
-
-.TreeNode {
-    font-size: 1rem;
-}
-
-.TreeNode:hover {
-    background-color: #873ca033;
-    color: black;
-    border-radius: 5px;
-}
-
-.TreeNode .TreeNodeToolBar {
-    background-color: gray;
-}
-
-.TreeNode .editingName {
-    background-color: blue;
-}
-
-.displayName:hover {
-    color: black;
-}
-
 .FolderTree {
-    overflow: auto;
+    align-items: center; /* 垂直方向の中央揃え */
+  }
+.TreeNode {
+    display: flex;
+}
+
+.iconContainer {
+    display: flex;
 }

@@ -26,6 +26,7 @@
     },
     "dependencies": {
         "glob": "^10.3.10",
+        "monaco-editor": "^0.45.0",
         "react-folder-tree": "^5.1.1",
         "react-monaco-editor": "^0.55.0",
         "react-tabs": "^6.0.2"
