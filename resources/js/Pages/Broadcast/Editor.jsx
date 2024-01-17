@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
+import FileTree from './FileTree.jsx';
 
 const Editor = () => {
   const [fileNames, setFileNames] = useState([]);
@@ -43,25 +44,25 @@ const Editor = () => {
 
   return (
     <div style={{ display: 'flex' }}>
-    <div style={{ flex: 1 }}>
-    <button className="execute" type="submit" onClick={handleExecuteCode}>
-        実行する
-      </button>
-      <Tabs onSelect={handleTabSelect}>
-        <TabList>
-            <Tab>app.js</Tab>
-        </TabList>
-          <TabPanel value={selectedFileName}>
-            <div className="editor-space">
-              <MonacoEditor
-                language="javascript"
-                theme="vs"
-                onChange={(newValue) => handleOnChange(newValue, index)}
-              />
-            </div>
-          </TabPanel>
-      </Tabs>
-
+      <FileTree />
+      <div style={{ flex: 1 }}>
+        <button className="execute" type="submit" onClick={handleExecuteCode}>
+          実行する
+        </button>
+        <Tabs onSelect={handleTabSelect}>
+          <TabList>
+              <Tab>app.js</Tab>
+          </TabList>
+            <TabPanel value={selectedFileName}>
+              <div className="editor-space">
+                <MonacoEditor
+                  language="javascript"
+                  theme="vs"
+                  onChange={(newValue) => handleOnChange(newValue, index)}
+                />
+              </div>
+            </TabPanel>
+        </Tabs>
       </div>
       <div style={{ flex: 1 }}>
         <ResultOfCode answerOfUser={answerOfUser} clickCountOfButton={clickCount} updateState={updateState}/>

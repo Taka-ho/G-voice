@@ -1,4 +1,5 @@
 .editor-space {
+  flex: 1;
   height: 90vh;
   margin: 0px;
 }
