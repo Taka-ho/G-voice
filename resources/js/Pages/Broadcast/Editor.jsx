@@ -4,8 +4,9 @@ import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
 import FileTree from './FileTree.jsx';
 
-const Editor = () => {
+const Editor = ({ fileAndFolder }) => {
   const [fileNames, setFileNames] = useState([]);
+  const [directoryName, setDirectoryName] = useState([]);
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [answerOfUser, setAnswerOfUser] = useState([]);
@@ -51,7 +52,9 @@ const Editor = () => {
         </button>
         <Tabs onSelect={handleTabSelect}>
           <TabList>
-              <Tab>app.js</Tab>
+            {fileNames.map((fileName) => (
+              <Tab key={fileName}>{fileName}</Tab>
+            ))}
           </TabList>
             <TabPanel value={selectedFileName}>
               <div className="editor-space">
