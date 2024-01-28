@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import './css/FileTree.scss';
+
 const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [isContextMenuFocused, setContextMenuFocused] = useState(false);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
     setContextMenuFocused(true);
     document.body.addEventListener('click', e => {
@@ -15,40 +17,27 @@ const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) 
     })
   };
 
-  const hideContextMenu = () => {
-    setContextMenu({ visible: false, x: 0, y: 0 });
-    setContextMenuFocused(false);
-  };
-
-  const handleContextMenuBlur = () => {
-    if (!isContextMenuFocused) {
-      hideContextMenu();
-    }
-  };
-
-  const isFolder = !!data.children;
+  const isFolder = !data.children;
   const contextMenuContent = contextMenu.visible && (
     <div
       style={{
         position: 'absolute',
-        marginLeft: '1rem',
-        top: contextMenu.y,
+        top: isFolder ? contextMenu.y - 15 : contextMenu.y,
         left: contextMenu.x,
         border: '1px solid #ccc',
         backgroundColor: '#fff',
         padding: '4px',
       }}
-      onBlur={handleContextMenuBlur} // コンテキストメニュー内にフォーカスがなくなったときに hideContextMenu を呼ぶ
     >
       {isFolder ? (
-        <div>
+        <div className='folder-context-menu'>
           <div className='contextMenu' onClick={() => onRename(data)}>名前の変更</div>
           <div className='contextMenu' onClick={() => onDelete(data)}>削除する</div>
           <div className='contextMenu' onClick={() => onAddFile(data)}>ファイルを追加する</div>
           <div className='contextMenu' onClick={() => onAddFolder(data)}>フォルダの追加</div>
         </div>
       ) : (
-        <div>
+        <div className='file-context-menu'>
           <div className='contextMenu' onClick={() => onRename(data)}>名前の変更</div>
           <div className='contextMenu' onClick={() => onDelete(data)}>削除する</div>
         </div>
@@ -57,21 +46,23 @@ const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) 
   );
 
   return (
-    <li style={{ marginLeft: `${indent}rem` }} onContextMenu={handleContextMenu} onBlur={hideContextMenu}>
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        className="bi bi-folder"
-        fill="currentColor"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          fillRule="evenodd"
-          d="M2 1a1 1 0 0 1 1-1h3.414l1 1H12a1 1 0 0 1 1 1v1H2V1zm1-1a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-8.172l-1-1H3z"
-        />
-      </svg>
-      {data.name}
+    <li style={{ marginLeft: `${indent}rem` }} onContextMenu={handleContextMenu}>
+      <div className='data'>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          className="bi bi-folder"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            d="M2 1a1 1 0 0 1 1-1h3.414l1 1H12a1 1 0 0 1 1 1v1H2V1zm1-1a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-8.172l-1-1H3z"
+          />
+        </svg>
+        {data.name}
+      </div>
 
       {data.children && (
         <ul>
@@ -92,8 +83,6 @@ const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) 
     </li>
   );
 };
-
-
 
 const FolderTree = () => {
   const [treeData, setTreeData] = useState({
@@ -137,6 +126,7 @@ const FolderTree = () => {
   
 
   const renameItem = (node) => {
+    console.log(node);
     const newName = prompt('Enter new name:', node.name);
     if (newName !== null) {
       node.name = newName;
