@@ -4,8 +4,8 @@ import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
 import FileTree from './FileTree.jsx';
 
-const Editor = ({ fileAndFolder }) => {
-  const [fileNames, setFileNames] = useState([]);
+const Editor = ({ file }) => {
+  const [fileNames, setFileNames] = useState([file]);
   const [directoryName, setDirectoryName] = useState([]);
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
@@ -45,7 +45,6 @@ const Editor = ({ fileAndFolder }) => {
 
   return (
     <div style={{ display: 'flex' }}>
-      <FileTree />
       <div style={{ flex: 1 }}>
         <button className="execute" type="submit" onClick={handleExecuteCode}>
           実行する
