@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\BroadCastController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,7 @@ use Inertia\Inertia;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+Route::get('/', [BroadCastController::class, 'index']);
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -36,3 +37,15 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::middleware('auth')->group(function () {
+    Route::get('/broadcast', [BroadCastController::class, 'index'])->name('broadcast.index');
+
+    Route::get('/broadcast/start', function () {
+        return Inertia::render('Broadcast/NewRoom');
+    })->name('broadcast.start');
+
+    Route::post('/broadcast/create', [BroadCastController::class, 'createRoom'])->name('broadcast.create');
+    Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down'])->name('broadcast.down');
+    Route::get('/broadcast/{roomId}', [BroadCastController::class, 'insideRoom'])->name('broadcast.insideRoom');
+});

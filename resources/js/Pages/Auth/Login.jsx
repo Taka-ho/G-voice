@@ -31,7 +31,6 @@ export default function Login({ status, canResetPassword }) {
             <Head title="ログイン" />
 
             {status && <div className="mb-4 font-medium text-sm text-green-600">{status}</div>}
-
             <form onSubmit={submit}>
                 <div>
                     <InputLabel htmlFor="email" value="メールアドレス" />

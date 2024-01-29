@@ -1,0 +1,13 @@
+.editor-space {
+  flex: 1;
+  height: 90vh;
+  margin: 0px;
+}
+
+.terminal-title {
+  font-size: 15px;
+}
+
+.view-lines {
+  width: 90%;
+}
