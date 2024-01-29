@@ -6,7 +6,7 @@ import './css/Tab.css';
 export default function InsideRoom() {
   return (
     <div className='wrapper'>
-      <div className='Editor' style={{ display: 'flex' }}>
+      <div className='Editor'>
           <FileTree />
       </div>
     </div>

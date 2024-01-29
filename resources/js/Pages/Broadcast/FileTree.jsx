@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
 import './css/FileTree.scss';
+import './css/Editor.css';
+import './css/Tab.css';
 
 const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) => {
-  const getParentName = (currentNode, targetId, parentName) => {
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
+  const [isContextMenuFocused, setContextMenuFocused] = useState(false);
+
+  const getParentName = (currentNode, targetId, parentName = null) => {
     if (currentNode.id === targetId) {
       return parentName;
     }
-
+  
     if (currentNode.children) {
       for (const childNode of currentNode.children) {
         const result = getParentName(childNode, targetId, currentNode.name);
-        if (result) {
+        if (result !== null) {
           return result;
         }
       }
     }
-
     return null;
   };
-
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
-  const [isContextMenuFocused, setContextMenuFocused] = useState(false);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
@@ -58,7 +59,7 @@ const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) 
           <div className='contextMenu' onClick={() => onRename(data)}>
             名前の変更
           </div>
-          <div className='contextMenu' onClick={() => onDelete(getParentName(data, data.id, null), data)}>
+          <div className='contextMenu' onClick={() => onDelete(data)}>
             削除する
           </div>
         </div>
@@ -73,7 +74,7 @@ const TreeNode = ({ data, onAddFile, indent, onAddFolder, onRename, onDelete }) 
           <div className='contextMenu' onClick={() => onAddFolder(data)}>
             フォルダの追加
           </div>
-          <div className='contextMenu' onClick={() => onDelete(getParentName(data, data.id, null), data)}>
+          <div className='contextMenu' onClick={() => onDelete(data)}>
             削除する
           </div>
         </div>
@@ -162,44 +163,49 @@ const FileTree = () => {
     if (newName !== null) {
       node.name = newName;
       setTreeData({ ...treeData });
+      
     }
   };
 
-  const deleteItem = (parentNode, nodeToDelete) => {
-    if (!parentNode) {
-      // ルートノードの場合
-      const newTreeData = { ...treeData };
-      const index = newTreeData.children.findIndex((node) => node.id === nodeToDelete.id);
-      if (index !== -1) {
-        newTreeData.children.splice(index, 1);
-        setTreeData(newTreeData);
-      }
-    } else {
-      // 子ノードの場合
-      const newParentNode = { ...parentNode };
-      const index = newParentNode.children.findIndex((node) => node.id === nodeToDelete.id);
-      if (index !== -1) {
-        newParentNode.children.splice(index, 1);
-        setTreeData((prevTreeData) => ({
-          ...prevTreeData,
-          children: [...prevTreeData.children],
-        }));
-      }
+  const deleteNodeById = (node, id) => {
+    if (node.id === id) {
+      return null;
     }
-  };
+
+    if (node.children && node.children.length > 0) {
+      const updatedChildren = node.children.map(child => {
+        const updatedChild = deleteNodeById(child, id);
+        return updatedChild !== null ? updatedChild : null;
+      }).filter(child => child !== null);
+
+      return { ...node, children: updatedChildren };
+    }
+
+    return node;
+  }
+
+  const deleteNode = (target) => {
+    console.log(target);
+    const id = target.id;
+    const updatedTreeData = deleteNodeById(treeData, id);
+    setTreeData({ ...updatedTreeData });
+  }
 
   return (
-    <ul style={{ marginLeft: `1rem` }}>
+  <div style={{ display: 'flex' }}>
+  <ul style={{ marginLeft: `1rem` }}>
       <TreeNode
         data={treeData}
         indent={0}
         onAddFile={(node) => addFile(node)}
         onAddFolder={(node) => addFolder(node)}
         onRename={(node) => renameItem(node)}
-        onDelete={(parentNode, node) => deleteItem(parentNode, node)}
+        onDelete={(node) => deleteNode(node)}
       />
     </ul>
+  </div>
   );
+  
 };
 
 export default FileTree;
