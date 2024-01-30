@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
-import FileTree from './FileTree.jsx';
+import FileTree from './FileTree';
 
+import './css/Editor.css';
+import './css/Tab.css';
 const Editor = ({ file }) => {
   const [fileNames, setFileNames] = useState([file]);
   const [directoryName, setDirectoryName] = useState([]);
@@ -45,6 +47,7 @@ const Editor = ({ file }) => {
 
   return (
     <div style={{ display: 'flex' }}>
+      <FileTree />
       <div style={{ flex: 1 }}>
         <button className="execute" type="submit" onClick={handleExecuteCode}>
           実行する
@@ -66,7 +69,7 @@ const Editor = ({ file }) => {
             </TabPanel>
         </Tabs>
       </div>
-      <div style={{ flex: 1 }}>
+      <div style={{ width: '50%' }}>
         <ResultOfCode answerOfUser={answerOfUser} clickCountOfButton={clickCount} updateState={updateState}/>
       </div>
     </div>

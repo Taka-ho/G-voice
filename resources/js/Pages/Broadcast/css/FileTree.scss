@@ -1,26 +1,19 @@
 $blue: rgb(77, 148, 255);
 
-.FolderTree {
-    align-items: center; /* 垂直方向の中央揃え */
-  }
-.TreeNode {
-    display: flex;
-}
-
-.iconContainer {
-    display: flex;
-}
-
 .contextMenu {
+  &:not(.showContextMenu) {
     &:hover {
       color: $blue;
       cursor: pointer;
     }
+  }
 }
 
 .data {
-  &:hover {
-    color: $blue;
-    cursor: pointer;
+  &:not(.showContextMenu) {
+    &:hover {
+      color: $blue;
+      cursor: pointer;
+    }
   }
 }
