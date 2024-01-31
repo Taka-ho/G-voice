@@ -6,9 +6,8 @@ import FileTree from './FileTree';
 
 import './css/Editor.css';
 import './css/Tab.css';
-const Editor = ({ file }) => {
-  const [fileNames, setFileNames] = useState([file]);
-  const [directoryName, setDirectoryName] = useState([]);
+const Editor = () => {
+  const [fileNames, setFileNames] = useState([]);
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [answerOfUser, setAnswerOfUser] = useState([]);
@@ -49,27 +48,30 @@ const Editor = ({ file }) => {
     <div style={{ display: 'flex' }}>
       <FileTree />
       <div style={{ flex: 1 }}>
-        <button className="execute" type="submit" onClick={handleExecuteCode}>
+      <button className="execute" type="submit" onClick={handleExecuteCode}>
           実行する
-        </button>
+        </button>    
         <Tabs onSelect={handleTabSelect}>
           <TabList>
-            {fileNames.map((fileName) => (
+            {fileNames.map((fileName, index) => (
               <Tab key={fileName}>{fileName}</Tab>
             ))}
           </TabList>
-            <TabPanel value={selectedFileName}>
+          {fileContents.map((item, index) => (
+            <TabPanel key={item.fileName} value={selectedFileName}>
               <div className="editor-space">
                 <MonacoEditor
                   language="javascript"
                   theme="vs"
+                  value={item.content}
                   onChange={(newValue) => handleOnChange(newValue, index)}
                 />
               </div>
             </TabPanel>
+          ))}
         </Tabs>
-      </div>
-      <div style={{ width: '50%' }}>
+        </div>
+      <div style={{ flex: 1 }}>
         <ResultOfCode answerOfUser={answerOfUser} clickCountOfButton={clickCount} updateState={updateState}/>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './css/FileTree.scss';
-import TreeNode from './FolderTree/TreeNode.jsx';
+import ContextMenu from './FolderTree/ContextMenu';
 
 
 const FileTree = () => {
@@ -25,29 +25,6 @@ const FileTree = () => {
       },
     ],
   });
-
-  const [clicked, setClicked] = useState([]);
-  const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'New File' };
-    const newChildren = [...parentNode.children, newFile];
-    parentNode.children = newChildren;
-    setTreeData({ ...treeData });
-  };
-
-  const addFolder = (parentNode) => {
-    const newFolder = { id: Date.now(), name: 'New Folder', children: [] };
-    const newChildren = [...parentNode.children, newFolder];
-    parentNode.children = newChildren;
-    setTreeData({ ...treeData });
-  };
-
-  const renameItem = (node) => {
-    const newName = prompt('Enter new name:', node.name);
-    if (newName !== null) {
-      node.name = newName;
-      setTreeData({ ...treeData });
-    }
-  };
 
   const deleteNodeById = (node, id) => {
     if (node.id === id) {
@@ -78,12 +55,9 @@ const FileTree = () => {
     <div style={{ display: 'flex-grow' }}>
         <div style={{ marginRight: '1rem' }}>
           <ul>
-            <TreeNode
+            <ContextMenu
               data={treeData}
               indent={0}
-              onAddFile={(node) => addFile(node)}
-              onAddFolder={(node) => addFolder(node)}
-              onRename={(node) => renameItem(node)}
               onDelete={(node) => deleteNode(node)}
             />
           </ul>
