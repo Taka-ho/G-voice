@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import './css/FileTree.scss';
 import ContextMenu from './FolderTree/ContextMenu';
 
-
-const FileTree = () => {
+const FileTree = ({ fileNames, setFileNames }) => {
   const [treeData, setTreeData] = useState({
     id: 1,
     name: 'root',
@@ -26,6 +25,17 @@ const FileTree = () => {
     ],
   });
 
+  const clickedFile = (clickedFile) => {
+    if (!clickedFile.children) {
+      const openedFile = { id: clickedFile.id, name: clickedFile.name };
+
+      if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
+        setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
+      }
+    }
+  };
+
+  //リファクタリングしなければならないところ。この2つの関数はコンテキストメニューコンポーネントに入れなければいけない。
   const deleteNodeById = (node, id) => {
     if (node.id === id) {
       return null;
@@ -59,11 +69,11 @@ const FileTree = () => {
               data={treeData}
               indent={0}
               onDelete={(node) => deleteNode(node)}
+              onClick={clickedFile}
             />
           </ul>
       </div>
     </div>
-    
   );
 };
 

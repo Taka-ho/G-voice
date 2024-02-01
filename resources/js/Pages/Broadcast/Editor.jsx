@@ -2,12 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
-import FileTree from './FileTree';
 
 import './css/Editor.css';
 import './css/Tab.css';
-const Editor = () => {
-  const [fileNames, setFileNames] = useState([]);
+const Editor = ({ selectedFiles }) => {
+  const [fileNames, setFileNames] = useState([selectedFiles]);
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [answerOfUser, setAnswerOfUser] = useState([]);
@@ -35,6 +34,7 @@ const Editor = () => {
       files: fileNames.map((item) => item),
       content: fileContents.map((item) => item.content),
     };
+    console.log('selectedFiles:', selectedFiles);
     setAnswerOfUser(answer);
     setClickCount(clickCount + 1);
   }, [fileContents]);
@@ -46,11 +46,10 @@ const Editor = () => {
 
   return (
     <div style={{ display: 'flex' }}>
-      <FileTree />
       <div style={{ flex: 1 }}>
       <button className="execute" type="submit" onClick={handleExecuteCode}>
-          実行する
-        </button>    
+        実行する
+      </button>    
         <Tabs onSelect={handleTabSelect}>
           <TabList>
             {fileNames.map((fileName, index) => (

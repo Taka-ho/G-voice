@@ -1,10 +1,12 @@
-// TreeNode.jsx
-
 import React, { useState } from 'react';
 
-const ContextMenu = ({ data, indent, onDelete }) => {
+const ContextMenu = ({ data, indent, onDelete, onClick }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [isContextMenuFocused, setContextMenuFocused] = useState(false);
+
+  const clickedFile = () => {
+    onClick(data);
+  };
 
   const getParentName = (currentNode, targetId, parentName = null) => {
     if (currentNode.id === targetId) {
@@ -27,12 +29,16 @@ const ContextMenu = ({ data, indent, onDelete }) => {
     e.stopPropagation();
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
     setContextMenuFocused(true);
+    closeContextMenu();
+  };
+
+  const closeContextMenu = () => {
     document.body.addEventListener('click', (e) => {
       setContextMenu({ visible: false, x: 0, y: 0 });
       setContextMenuFocused(false);
       document.body.removeEventListener('click', documentClickHandler);
     });
-  };
+  }
 
   const documentClickHandler = (e) => {
     if (popupRef.current.contains(e.target)) return;
@@ -106,7 +112,7 @@ const ContextMenu = ({ data, indent, onDelete }) => {
 
   return (
     <li style={{ marginLeft: `${indent}rem` }} onContextMenu={handleContextMenu}>
-      <div className='data'>
+      <div className='data' onClick={clickedFile}>
         <svg
           width='16'
           height='16'
@@ -130,6 +136,7 @@ const ContextMenu = ({ data, indent, onDelete }) => {
               data={child}
               indent={indent + 0.5}
               onDelete={onDelete}
+              onClick={onClick}
             />
           ))}
         </ul>
