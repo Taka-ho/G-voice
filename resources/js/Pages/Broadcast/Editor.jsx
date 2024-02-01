@@ -1,16 +1,37 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 import ResultOfCode from './ResultOfCode';
+import _ from 'lodash';
 
 import './css/Editor.css';
 import './css/Tab.css';
 const Editor = ({ selectedFiles }) => {
-  const [fileNames, setFileNames] = useState([selectedFiles]);
-  const [fileContents, setFileContents] = useState([]);
+  const [fileNames, setFileNames] = useState([]);
+  const [fileContents, setFileContents] = useState(['']);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [answerOfUser, setAnswerOfUser] = useState([]);
-  const [clickCount, setClickCount] = useState(0);
+
+  const prevProps = useRef();
+
+  useEffect(() => {
+    const files = [];
+    if (0 < selectedFiles.length && selectedFiles.length < 2) {
+      files.push(selectedFiles[0].name);
+      setFileNames(files);
+    }
+
+    const diff = [];
+    if (prevProps.current) {
+      for (const key in selectedFiles) {
+        if (!_.isEqual(prevProps.current[key], selectedFiles[key])) {
+          diff[key] = selectedFiles[key];
+        }
+      }
+    setFileNames(diff.slice(-1)[0].name);
+    }
+    prevProps.current = selectedFiles;
+  }, [selectedFiles]);
 
   const handleOnChange = (newValue, index) => {
     const updatedContents = fileContents.map((item, i) =>
@@ -27,16 +48,14 @@ const Editor = ({ selectedFiles }) => {
     setFileNames(names);
     setFileContents(contents);
   };
-
+  console.log(fileNames);
   const handleExecuteCode = useCallback(() => {
     // 実行ボタンを押す前にMonaco Editorの内容を保存
     const answer = {
       files: fileNames.map((item) => item),
       content: fileContents.map((item) => item.content),
     };
-    console.log('selectedFiles:', selectedFiles);
     setAnswerOfUser(answer);
-    setClickCount(clickCount + 1);
   }, [fileContents]);
 
   const handleTabSelect = (selectedIndex) => {
@@ -71,7 +90,7 @@ const Editor = ({ selectedFiles }) => {
         </Tabs>
         </div>
       <div style={{ flex: 1 }}>
-        <ResultOfCode answerOfUser={answerOfUser} clickCountOfButton={clickCount} updateState={updateState}/>
+        <ResultOfCode answerOfUser={answerOfUser} updateState={updateState}/>
       </div>
     </div>
   );

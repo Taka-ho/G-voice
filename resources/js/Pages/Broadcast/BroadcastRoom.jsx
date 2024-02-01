@@ -1,11 +1,9 @@
-// InsideRoom.jsx
 import React, { useEffect, useState } from 'react';
 import FileTree from './FileTree';
 import Editor from './Editor';
 
 const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
-
   useEffect(() => {
     <Editor selectedFiles={ fileNames } />
   } , [fileNames]);

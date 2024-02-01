@@ -1,7 +1,7 @@
 import React, { useEffect, memo, useState } from 'react';
 import './css/ResultOfCode.css';
 
-const ResultOfCode = memo(({ answerOfUser, clickCountOfButton, updateState }) => {
+const ResultOfCode = memo(({ answerOfUser, updateState }) => {
   const [returnData, setReturnData] = useState([]);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ const ResultOfCode = memo(({ answerOfUser, clickCountOfButton, updateState }) =>
     return () => {
       isMounted = false; // コンポーネントが unmount されたらフラグを false にする
     };
-  }, [answerOfUser, clickCountOfButton]);
+  }, [answerOfUser]);
 
   return (
     <div id="showResult" style={{ whiteSpace: 'pre-wrap' }}>

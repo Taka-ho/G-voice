@@ -28,7 +28,6 @@ const FileTree = ({ fileNames, setFileNames }) => {
   const clickedFile = (clickedFile) => {
     if (!clickedFile.children) {
       const openedFile = { id: clickedFile.id, name: clickedFile.name };
-
       if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
       }
