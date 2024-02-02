@@ -47,5 +47,5 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/broadcast/create', [BroadCastController::class, 'createRoom'])->name('broadcast.create');
     Route::get('/broadcast/down/{id}', [BroadCastController::class, 'down'])->name('broadcast.down');
-    Route::get('/broadcast/{roomId}', [BroadCastController::class, 'insideRoom'])->name('broadcast.insideRoom');
+    Route::get('/broadcast/{roomId}', [BroadCastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
 });

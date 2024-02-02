@@ -13,8 +13,9 @@ class BroadCastController extends Controller
     //音声配信ルームについてのController
     public function index ()
     {
-        //配信中の部屋のリストを取得する。broadcastsテーブルのbroadcasting_flagカラムが1のものが条件。
-        return \DB::table('broadcasts')->where('broadcasting_flag', 1)->get();
+        Inertia::render('Broadcast/NewRoom');
+        $index = new Broadcast;
+
     }
 
     private function down(Request $request)
@@ -36,7 +37,7 @@ class BroadCastController extends Controller
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
 
-    public function insideRoom($userId)
+    public function BroadcastRoom($userId)
     {
         return Inertia::render('Broadcast/BroadcastRoom');
     }

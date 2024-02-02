@@ -19,7 +19,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('room_names')->NotNull();
             $table->text('room_explain');
-            $table->string('source_code_of_users');
             $table->integer('broadcasting_flag')->NotNull();
             $table->date('created_at');
         });
