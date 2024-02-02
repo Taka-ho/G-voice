@@ -8,7 +8,7 @@ import './css/Editor.css';
 import './css/Tab.css';
 const Editor = ({ selectedFiles }) => {
   const [fileNames, setFileNames] = useState([]);
-  const [fileContents, setFileContents] = useState(['']);
+  const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [answerOfUser, setAnswerOfUser] = useState([]);
 
@@ -17,21 +17,28 @@ const Editor = ({ selectedFiles }) => {
   useEffect(() => {
     const setSelectedFileNames = () => {
       const files = [];
+      const contents = [];
       if (0 < selectedFiles.length && selectedFiles.length < 2 && fileNames.length === 0) {
         files.push(selectedFiles[0].name);
+        contents.push('');
         setFileNames(files);
+        setFileContents(contents);
       }
       if (selectedFiles.length === 1) {
         setFileNames(prevFileNames => [selectedFiles[0].name]); // 新しいファイル名だけを設定
+        contents.push('');
+        setFileContents(contents);
       } else if (selectedFiles.length > 1 && prevProps.current) {
         const diff = selectedFiles.filter(file => !prevProps.current.includes(file));
-        if (diff.length > 0) {
+        if (0 < diff.length) {
           const newFileNames = diff.map(file => file.name);
           setFileNames(prevFileNames => [...prevFileNames, ...newFileNames]);
+          const newContents = Array(diff.length).fill(''); // 要素数を増やす
+          setFileContents(prevContents => [...prevContents, ...newContents]);
         }
       }
       prevProps.current = selectedFiles;
-    };
+    };    
 
     setSelectedFileNames();
   }, [selectedFiles]);
@@ -65,7 +72,6 @@ const Editor = ({ selectedFiles }) => {
     setSelectedFileName(fileName);
   };
 
-  console.log(fileNames);
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ flex: 1 }}>
@@ -73,24 +79,24 @@ const Editor = ({ selectedFiles }) => {
         実行する
       </button>    
       <Tabs onSelect={handleTabSelect}>
-        <TabList>
-          {fileNames.map((fileName, index) => (
-            <Tab key={fileName}>{fileName}</Tab>
+          <TabList>
+            {fileNames.map((fileName, index) => (
+              <Tab key={index}>{fileName}</Tab>
+            ))}
+          </TabList>
+          {fileContents.map((item, index) => (
+            <TabPanel key={item.fileName} value={fileNames[index]}>
+              <div className="editor-space">
+                <MonacoEditor
+                  language="javascript"
+                  theme="vs"
+                  value={item.content}
+                  onChange={(newValue) => handleOnChange(newValue, index)}
+                />
+              </div>
+            </TabPanel>
           ))}
-        </TabList>
-        {fileContents.map((item, index) => (
-          <TabPanel key={item.fileName} value={selectedFileName}>
-            <div className="editor-space">
-              <MonacoEditor
-                language="javascript"
-                theme="vs"
-                value={item.content}
-                onChange={(newValue) => handleOnChange(newValue, index)}
-              />
-            </div>
-          </TabPanel>
-        ))}
-      </Tabs>
+        </Tabs>
         </div>
       <div style={{ flex: 1 }}>
         <ResultOfCode answerOfUser={answerOfUser} updateState={updateState}/>
