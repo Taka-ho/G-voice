@@ -15,22 +15,25 @@ const Editor = ({ selectedFiles }) => {
   const prevProps = useRef();
 
   useEffect(() => {
-    const files = [];
-    if (0 < selectedFiles.length && selectedFiles.length < 2) {
-      files.push(selectedFiles[0].name);
-      setFileNames(files);
-    }
-
-    const diff = [];
-    if (prevProps.current) {
-      for (const key in selectedFiles) {
-        if (!_.isEqual(prevProps.current[key], selectedFiles[key])) {
-          diff[key] = selectedFiles[key];
+    const setSelectedFileNames = () => {
+      const files = [];
+      if (0 < selectedFiles.length && selectedFiles.length < 2 && fileNames.length === 0) {
+        files.push(selectedFiles[0].name);
+        setFileNames(files);
+      }
+      if (selectedFiles.length === 1) {
+        setFileNames(prevFileNames => [selectedFiles[0].name]); // 新しいファイル名だけを設定
+      } else if (selectedFiles.length > 1 && prevProps.current) {
+        const diff = selectedFiles.filter(file => !prevProps.current.includes(file));
+        if (diff.length > 0) {
+          const newFileNames = diff.map(file => file.name);
+          setFileNames(prevFileNames => [...prevFileNames, ...newFileNames]);
         }
       }
-    setFileNames(diff.slice(-1)[0].name);
-    }
-    prevProps.current = selectedFiles;
+      prevProps.current = selectedFiles;
+    };
+
+    setSelectedFileNames();
   }, [selectedFiles]);
 
   const handleOnChange = (newValue, index) => {
@@ -48,7 +51,6 @@ const Editor = ({ selectedFiles }) => {
     setFileNames(names);
     setFileContents(contents);
   };
-  console.log(fileNames);
   const handleExecuteCode = useCallback(() => {
     // 実行ボタンを押す前にMonaco Editorの内容を保存
     const answer = {
@@ -63,31 +65,32 @@ const Editor = ({ selectedFiles }) => {
     setSelectedFileName(fileName);
   };
 
+  console.log(fileNames);
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ flex: 1 }}>
       <button className="execute" type="submit" onClick={handleExecuteCode}>
         実行する
       </button>    
-        <Tabs onSelect={handleTabSelect}>
-          <TabList>
-            {fileNames.map((fileName, index) => (
-              <Tab key={fileName}>{fileName}</Tab>
-            ))}
-          </TabList>
-          {fileContents.map((item, index) => (
-            <TabPanel key={item.fileName} value={selectedFileName}>
-              <div className="editor-space">
-                <MonacoEditor
-                  language="javascript"
-                  theme="vs"
-                  value={item.content}
-                  onChange={(newValue) => handleOnChange(newValue, index)}
-                />
-              </div>
-            </TabPanel>
+      <Tabs onSelect={handleTabSelect}>
+        <TabList>
+          {fileNames.map((fileName, index) => (
+            <Tab key={fileName}>{fileName}</Tab>
           ))}
-        </Tabs>
+        </TabList>
+        {fileContents.map((item, index) => (
+          <TabPanel key={item.fileName} value={selectedFileName}>
+            <div className="editor-space">
+              <MonacoEditor
+                language="javascript"
+                theme="vs"
+                value={item.content}
+                onChange={(newValue) => handleOnChange(newValue, index)}
+              />
+            </div>
+          </TabPanel>
+        ))}
+      </Tabs>
         </div>
       <div style={{ flex: 1 }}>
         <ResultOfCode answerOfUser={answerOfUser} updateState={updateState}/>

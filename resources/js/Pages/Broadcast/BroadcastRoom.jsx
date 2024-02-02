@@ -4,9 +4,6 @@ import Editor from './Editor';
 
 const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
-  useEffect(() => {
-    <Editor selectedFiles={ fileNames } />
-  } , [fileNames]);
 
   return (
     <div className='all-space'>
