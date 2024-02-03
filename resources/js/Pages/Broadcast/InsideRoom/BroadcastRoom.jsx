@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import FileTree from './FileTree';
+import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
 
 const BroadcastRoom = () => {

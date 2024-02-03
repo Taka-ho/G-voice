@@ -12,10 +12,10 @@ class Broadcast extends Model
 {
     use HasFactory;
 
-    public function index(): string
+    public function broadcastingRooms(): string
     {
         //配信中の部屋のリストを取得する。broadcastsテーブルのbroadcasting_flagカラムが1のものが条件。
-        return \DB::table('broadcasts')->where('broadcasting_flag', 1)->get();
+        return \DB::table('broadcasts')->where('broadcasting_flag', 1)->get()->paginate(15);
     }
 
     private function relationWithUser(): BelongsTo

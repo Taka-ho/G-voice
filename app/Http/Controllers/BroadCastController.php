@@ -13,9 +13,9 @@ class BroadCastController extends Controller
     //音声配信ルームについてのController
     public function index ()
     {
-        Inertia::render('Broadcast/NewRoom');
+        Inertia::render('Broadcast/BroadcastingRooms');
         $index = new Broadcast;
-
+        $userId = $index->broadcastingRooms();
     }
 
     private function down(Request $request)
@@ -39,6 +39,6 @@ class BroadCastController extends Controller
 
     public function BroadcastRoom($userId)
     {
-        return Inertia::render('Broadcast/BroadcastRoom');
+        return Inertia::render('Broadcast/InsideRoom/BroadcastRoom');
     }
 }

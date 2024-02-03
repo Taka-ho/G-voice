@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import './css/FileTree.scss';
-import ContextMenu from './FolderTree/ContextMenu';
+import '../css/FileTree.scss';
+import ContextMenu from './ContextMenu';
 
 const FileTree = ({ fileNames, setFileNames }) => {
   const [treeData, setTreeData] = useState({
