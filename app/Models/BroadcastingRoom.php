@@ -18,21 +18,5 @@ class BroadcastingRoom extends Model
         return $this->hasOne(User::class);
     }
 
-    public function registerInfo($request): string
-    {
-        $userId = Auth::user()->id;
-        $title = $request->title;
-        $broadcastExplain = $request->broadcastExplain;
-        $broadcastingFlag = 1;
-        $startOfBroadcast = now();
-
-        DB::insert("INSERT INTO broadcasting_rooms (user_id, room_names, room_explain, broadcasting_flag, created_at) VALUES (?, ?, ?, ?, ?)", [
-            $userId, 
-            $title, 
-            $broadcastExplain, 
-            $broadcastingFlag,
-            $startOfBroadcast
-        ]);        
-        return $userId;
-    }
+    
 }

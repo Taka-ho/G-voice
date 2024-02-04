@@ -36,7 +36,7 @@ const InfiniteScroll = (props) => {
   };
 
   return (
-  <div className='mx-16'>
+  <div className='mx-24'>
         {/* データを表示する部分 */}
         {data.map((item, index) => (
       <div className='cursor-pointer mt-8 border rounded-full bg-gray'>

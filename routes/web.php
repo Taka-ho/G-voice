@@ -17,7 +17,6 @@ use App\Http\Controllers\BroadcastController;
 |
 */
 Route::get('/', [BroadcastController::class, 'index'])->name('broadcast.index');
-Route::get('/{id}', [BroadcastController::class, 'index'])->name('broadcast.index');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

@@ -26,13 +26,14 @@ class BroadcastController extends Controller
     public function createRoom(Request $request)
     {
         Inertia::render('Broadcast/NewRoom');
-        $register = new BroadcastingRoom;
+        $register = new Broadcast;
         $userId = $register->registerInfo($request);
         return $this->GoToRoom($userId);
     }
 
     public function GoToRoom($userId)
     {
+        Log::debug($userId);
         $roomId = DB::table('broadcasting_rooms')->where('user_id', $userId)->first();
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
