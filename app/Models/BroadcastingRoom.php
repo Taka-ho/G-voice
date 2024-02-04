@@ -4,24 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
-class Broadcast extends Model
+class BroadcastingRoom extends Model
 {
     use HasFactory;
 
-    public function BroadcastingRooms(): string
+    public function user(): HasOne
     {
-        //配信中の部屋のリストを取得する。broadcastsテーブルのbroadcasting_flagカラムが1(配信中)のものが条件。
-        return DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(100);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(User::class);
     }
 
     public function registerInfo($request): string
@@ -32,7 +26,7 @@ class Broadcast extends Model
         $broadcastingFlag = 1;
         $startOfBroadcast = now();
 
-        DB::insert("INSERT INTO broadcasts (user_id, room_names, room_explain, broadcasting_flag, created_at) VALUES (?, ?, ?, ?, ?)", [
+        DB::insert("INSERT INTO broadcasting_rooms (user_id, room_names, room_explain, broadcasting_flag, created_at) VALUES (?, ?, ?, ?, ?)", [
             $userId, 
             $title, 
             $broadcastExplain, 

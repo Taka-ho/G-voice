@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\BroadcastingRoom;
 use App\Models\Broadcast;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class BroadCastController extends Controller
+class BroadcastController extends Controller
 {
     //音声配信ルームについてのController
-    public function index ()
+    public function index()
     {
-        Inertia::render('Broadcast/BroadcastingRooms');
-        $index = new Broadcast;
-        $userId = $index->broadcastingRooms();
+        $broadcasting = DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(15);
+        return Inertia::render('Broadcast/BroadcastingRooms/InfiniteScroll', ['broadcasting' => $broadcasting]);
     }
 
     private function down(Request $request)
@@ -26,14 +26,14 @@ class BroadCastController extends Controller
     public function createRoom(Request $request)
     {
         Inertia::render('Broadcast/NewRoom');
-        $register = new Broadcast;
+        $register = new BroadcastingRoom;
         $userId = $register->registerInfo($request);
-        return $this->goToRoom($userId);
+        return $this->GoToRoom($userId);
     }
 
-    public function goToRoom($userId)
+    public function GoToRoom($userId)
     {
-        $roomId = DB::table('broadcasts')->where('user_id', $userId)->first();
+        $roomId = DB::table('broadcasting_rooms')->where('user_id', $userId)->first();
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
 

@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('broadcasts', function (Blueprint $table) {
+        Schema::create('broadcasting_rooms', function (Blueprint $table) {
             $table->id()->unique();
 
             // broadcasts テーブルの外部キー関連付け
             $table->unsignedBigInteger('user_id')->NotNull();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('room_names')->NotNull();
-            $table->text('room_explain');
+            $table->string('room_names', 140)->NotNull();
+            $table->string('room_explain', 140);
             $table->integer('broadcasting_flag')->NotNull();
-            $table->date('created_at');
+            $table->timestamps();
         });
     }
 

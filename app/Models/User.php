@@ -45,9 +45,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    private function relationWithBroadcast () : HasOne
+
+    public function broadcast(): HasOne
     {
         return $this->hasOne(Broadcast::class);
     }
-
 }

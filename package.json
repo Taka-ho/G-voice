@@ -30,6 +30,7 @@
         "immer": "^10.0.3",
         "lodash": "^4.17.21",
         "monaco-editor": "^0.45.0",
+        "phpmyadmin": "^0.0.1-security",
         "react-monaco-editor": "^0.55.0",
         "react-tabs": "^6.0.2"
     }

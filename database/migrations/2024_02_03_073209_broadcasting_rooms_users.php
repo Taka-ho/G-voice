@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
             $table->unsignedBigInteger('broadcasts_id')->NotNull();
-            $table->foreign('broadcasts_id')->references('id')->on('broadcasts')->onDelete('cascade');
+            $table->foreign('broadcasts_id')->references('id')->on('broadcasting_rooms')->onDelete('cascade');
 
             $table->integer('streamer_flag')->NotNull();
             $table->string('name')->nullable();
