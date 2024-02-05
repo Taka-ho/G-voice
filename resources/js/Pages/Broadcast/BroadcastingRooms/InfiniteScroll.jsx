@@ -36,14 +36,14 @@ const InfiniteScroll = (props) => {
   };
 
   return (
-  <div className='mx-24'>
+    <div className='mx-20'>
         {/* データを表示する部分 */}
         {data.map((item, index) => (
       <div className='cursor-pointer mt-8 border rounded-full bg-gray'>
-        <div className='p-6 mx-3' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }} key={item.id}>
+        <div className='p-3' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }} key={item.id}>
           <h1 style={{ marginRight: '5px' }}>{props.broadcasting.data[index].room_names}</h1>
         </div>
-        <p className='text-center'>{props.broadcasting.data[index].room_explain}</p>
+        <p className='text-center p-6'>{props.broadcasting.data[index].room_explain}</p>
       </div>
     ))}
       {/* ローディングスピナーなどを表示する部分 */}

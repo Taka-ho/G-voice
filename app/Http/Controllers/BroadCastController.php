@@ -20,7 +20,7 @@ class BroadcastController extends Controller
 
     private function down(Request $request)
     {
-
+        
     }
 
     public function createRoom(Request $request)
@@ -33,7 +33,6 @@ class BroadcastController extends Controller
 
     public function GoToRoom($userId)
     {
-        Log::debug($userId);
         $roomId = DB::table('broadcasting_rooms')->where('user_id', $userId)->first();
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
