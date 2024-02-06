@@ -18,10 +18,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('auth')->group(function () {
-    // 既存のコメント取得エンドポイント
-    Route::get('/comments', [CommentController::class, 'index'])->name('get.broadcastingRooms.comment');
+// 既存のコメント取得エンドポイント
+Route::get('/comments', [CommentController::class, 'index'])->name('get.broadcastingRooms.comment');
 
-    // 新しいコメント作成エンドポイント
-    Route::post('/comments', [CommentController::class, 'store'])->name('store.broadcastingRooms.comment');
-});
+// 新しいコメント作成エンドポイント
+Route::post('/comments', [CommentController::class, 'store'])->name('store.broadcastingRooms.comment');
+

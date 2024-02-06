@@ -1,18 +1,17 @@
 <?php
-// app/Http/Controllers/CommentController.php
 
 namespace App\Http\Controllers;
 
-use App\Events\CommentSent;
+use App\Events\SentComment;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Event;
+
 class CommentController extends Controller
 {
     public function index()
     {
-        $comments = Comment::latest()->get();
+        $comments = Comment::all();
         return response()->json($comments);
     }
 
@@ -22,13 +21,13 @@ class CommentController extends Controller
             'body' => 'required',
         ]);
 
-        $newComment = Comment::create([
+        $newComment = SentComment::create([
             'body' => $request->input('body'),
             // 他の必要なコメントの属性を追加
         ]);
         Log::debug($newComment);
         // 新しいコメントができたらイベントを発火
-        event(new CommentSent($newComment));
+        event(new SentComment($newComment));
 
         return response()->json($newComment);
     }

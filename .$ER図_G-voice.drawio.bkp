@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-02-05T08:30:38.854Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" version="23.0.2" etag="LoHHGUConwKqyffb8gu3" type="device">
+<mxfile host="Electron" modified="2024-02-05T09:17:14.165Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/23.0.2 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" version="23.0.2" etag="riX6s0E7IrwHx3XWqdVu" type="device">
   <diagram name="ページ1" id="zueMGjlBRBZrby6VS202">
     <mxGraphModel dx="1687" dy="1032" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -170,7 +170,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="idrHYLEO_stsbiDGyxgb-40" value="&lt;div style=&quot;text-align: start;&quot;&gt;broadcasting_rooms_users&lt;br&gt;&lt;/div&gt;" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;" parent="1" vertex="1">
-          <mxGeometry x="890" y="400" width="200" height="170" as="geometry" />
+          <mxGeometry x="890" y="400" width="200" height="150" as="geometry" />
         </mxCell>
         <mxCell id="idrHYLEO_stsbiDGyxgb-41" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=1;" parent="idrHYLEO_stsbiDGyxgb-40" vertex="1">
           <mxGeometry y="30" width="200" height="30" as="geometry" />
@@ -264,16 +264,6 @@
         <mxCell id="idrHYLEO_stsbiDGyxgb-65" value="created_at" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" parent="idrHYLEO_stsbiDGyxgb-63" vertex="1">
           <mxGeometry x="30" width="150" height="30" as="geometry">
             <mxRectangle width="150" height="30" as="alternateBounds" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="81" style="edgeStyle=orthogonalEdgeStyle;html=1;startArrow=ERone;startFill=0;endArrow=ERone;endFill=0;" parent="1" edge="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="620" y="210" as="sourcePoint" />
-            <Array as="points">
-              <mxPoint x="750" y="210" />
-              <mxPoint x="750" y="555" />
-            </Array>
-            <mxPoint x="890" y="555" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="idrHYLEO_stsbiDGyxgb-66" value="Users" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;" parent="1" vertex="1">
@@ -569,11 +559,6 @@
         </mxCell>
         <mxCell id="-PePOq3lMxKFNj47y4mR-83" value="streamer_flag" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="920" y="510" width="170" height="30" as="geometry">
-            <mxRectangle width="170" height="30" as="alternateBounds" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="-PePOq3lMxKFNj47y4mR-84" value="name" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="920" y="540" width="170" height="30" as="geometry">
             <mxRectangle width="170" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>

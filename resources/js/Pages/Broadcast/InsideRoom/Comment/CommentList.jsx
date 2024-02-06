@@ -1,6 +1,7 @@
 import React from 'react';
 
 const CommentList = ({ comments }) => {
+  console.log(comments);
   return (
     <ul>
       {comments.map((comment, index) => (
