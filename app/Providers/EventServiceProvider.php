@@ -17,11 +17,8 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+            UsePusher::class
         ],
-        'App\Events\SentComment' => [
-            '/Listeners/UsePusher.php'
-        ],
-
     ];
 
     /**

@@ -13,7 +13,8 @@ return new class extends Migration
         Schema::create('broadcasting_rooms_comments', function (Blueprint $table) {
             $table->id()->unique();
             $table->string('comment', 200);
-            $table->timestamps();
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
         });
     }
 

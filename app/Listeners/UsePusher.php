@@ -1,20 +1,19 @@
 <?php
+
+namespace App\Listeners;
+
 use App\Events\SentComment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class UsePusher implements ShouldQueue
+class UsePusher
 {
-    protected $someService;
-
     /**
      * Create the event listener.
-     *
-     * @param SomeService $someService
      */
-    public function __construct(SomeService $someService)
+    public function __construct()
     {
-        $this->someService = $someService;
+        //
     }
 
     /**
@@ -22,6 +21,6 @@ class UsePusher implements ShouldQueue
      */
     public function handle(SentComment $event): void
     {
-        // $this->someService->doSomething();
+        //
     }
 }

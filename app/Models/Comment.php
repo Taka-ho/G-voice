@@ -11,13 +11,15 @@ class Comment extends Model
     protected $table = 'broadcasting_rooms_comments';
     protected $fillable = ['comment'];
 
-    public function insertComment($request) 
+    public function insertComment($request) : string
     {
         $comment = $request->text;
-        
-        // id カラムは自動インクリメントされるため指定不要
-        DB::insert("INSERT INTO broadcasting_rooms_comments (comment) VALUES (?)", [
-            'comment' => $comment
+    
+        // Eloquentのcreateメソッドを使用してレコードを作成
+        Comment::create([
+            'comment' => $comment,
         ]);
+        return $comment;
     }
+    
 }

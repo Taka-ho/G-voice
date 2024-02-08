@@ -6,7 +6,7 @@ use App\Events\SentComment;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Event;
 class CommentController extends Controller
 {
     public function index()
@@ -18,17 +18,12 @@ class CommentController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'body' => 'required',
+            'text' => 'required',
         ]);
+        $commentModel = new Comment;
+        $returnValueOfComment = $commentModel->insertComment($request);
+        event(new SentComment($returnValueOfComment));
 
-        $newComment = SentComment::create([
-            'body' => $request->input('body'),
-            // 他の必要なコメントの属性を追加
-        ]);
-        Log::debug($newComment);
-        // 新しいコメントができたらイベントを発火
-        event(new SentComment($newComment));
-
-        return response()->json($newComment);
+        return response()->json();
     }
 }
