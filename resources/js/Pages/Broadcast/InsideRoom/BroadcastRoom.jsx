@@ -8,10 +8,16 @@ const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
   const [comments, setComments] = useState([]);
 
-   useEffect(() => {
+  useEffect(() => {
     fetch('/api/comments')
       .then((response) => response.json())
       .then((data) => setComments(data));
+
+    // Pusherを使ったリアルタイムコメントのリッスンを追加
+    window.Echo.channel('comment')
+      .listen('.SentComment', (e) => {
+        setComments(prevComments => [...prevComments, e.comment]);
+      });
   }, []);
 
   const addComment = (newComment) => {
@@ -23,7 +29,12 @@ const BroadcastRoom = () => {
       body: JSON.stringify(newComment),
     })
       .then((response) => response.json())
-      .then((data) => setComments([...comments, data]));
+      .then((data) => {
+        setComments([...comments, data]);
+        fetch('/api/comments') // GETリクエストを実行してコメント一覧を更新
+          .then((response) => response.json())
+          .then((data) => setComments(data));
+      });
   };
 
   return (
@@ -34,8 +45,8 @@ const BroadcastRoom = () => {
           <Editor selectedFiles={ fileNames } />
         </div>
         <div className='comments'>
+          <CommentList comments={comments} updateComments={setComments} />
           <CommentForm onAddComment={addComment} />
-          <CommentList comments={comments} />
         </div>
       </div>
     </div>

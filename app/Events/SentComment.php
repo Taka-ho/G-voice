@@ -8,7 +8,6 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Listeners\UsePusher;
 class SentComment implements ShouldBroadcast
 {
@@ -29,11 +28,13 @@ class SentComment implements ShouldBroadcast
 
      public function __construct(string $comment)
     {
-        Log::debug('$commentの値:' . $comment);
         $this->comment = $comment;
     }
-    
-    
+
+    public function broadcastWith()
+    {
+        return ['comment' => $this->comment];
+    }
 
     /**
      * Get the channels the event should broadcast on.
@@ -42,8 +43,7 @@ class SentComment implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [
-            new PrivateChannel('comment'),
-        ];
+        return [new Channel('comment')];
+        
     }
 }
