@@ -3,6 +3,7 @@ import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
 import CommentForm from './Comment/CommentForm';
 import CommentList from './Comment/CommentList';
+import AudioStreamer from './Audio/AudioStreamer';
 
 const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
@@ -39,6 +40,7 @@ const BroadcastRoom = () => {
 
   return (
     <div className='all-space'>
+      <AudioStreamer />
       <div style={{ display: 'flex' }}>
         <FileTree fileNames={ fileNames } setFileNames={ setFileNames } />
         <div style={{ flex: 1 }}>
