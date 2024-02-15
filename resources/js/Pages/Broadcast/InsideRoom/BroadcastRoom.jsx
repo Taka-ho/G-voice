@@ -47,8 +47,8 @@ const BroadcastRoom = () => {
           <Editor selectedFiles={ fileNames } />
         </div>
         <div className='comments'>
-          <CommentList comments={comments} updateComments={setComments} />
-          <CommentForm onAddComment={addComment} />
+          <CommentList comments={ comments } updateComments={ setComments } />
+          <CommentForm onAddComment={ addComment } />
         </div>
       </div>
     </div>

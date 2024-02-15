@@ -22,3 +22,7 @@ Broadcast::channel('video-call', function ($user) {
     return ['id' => $user->id, 'name' => $user->name];
 
 });
+
+Broadcast::channel('BroadcastingCode', function ($user) {
+    return $user; // 認証が必要な場合は適切な認証チェックを行ってください
+});

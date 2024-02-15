@@ -41,4 +41,19 @@ class BroadcastController extends Controller
     {
         return Inertia::render('Broadcast/InsideRoom/BroadcastRoom');
     }
+
+    public function update(Request $request)
+    {
+        $user = $request->user(); // ユーザー情報を取得する方法に合わせて変更してください
+        $code = $request->input('code');
+
+        event(new CodeChangeEvent($user, $code));
+
+        return response()->json();
+    }
+
+    public function streamAudio(Request $request)
+    {
+        return Inertia::render('Broadcast/InsideRoom/ViewerDashboard');
+    }
 }

@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BroadcastController;
-use App\Http\Controllers\AudioStreamController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/broadcast/down/{id}', [BroadcastController::class, 'down'])->name('broadcast.down');
     Route::get('/broadcast/{roomId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
 
-    Route::post('/audio-stream', [AudioStreamController::class, 'streamAudio']);
+    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);
 });
 
 require __DIR__.'/auth.php';
