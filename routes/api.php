@@ -23,4 +23,3 @@ Route::get('/comments', [CommentController::class, 'index'])->name('get.broadcas
 
 // 新しいコメント作成エンドポイント
 Route::post('/comments', [CommentController::class, 'store'])->name('store.broadcastingRooms.comment');
-

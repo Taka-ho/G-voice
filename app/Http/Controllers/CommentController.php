@@ -6,10 +6,10 @@ use App\Events\SentComment;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
+
 class CommentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $comments = Comment::all();
         Event::dispatch(new SentComment($comments));
@@ -21,9 +21,9 @@ class CommentController extends Controller
         $this->validate($request, [
             'text' => 'required',
         ]);
-        $commentModel = new Comment;
-        $returnValueOfComment = $commentModel->insertComment($request);
-        event(new SentComment($returnValueOfComment));
+        $commentModel = new Comment();
+        $comment = $commentModel->insertComment($request);
+        event(new SentComment($comment));
         return response()->json();
     }
 }

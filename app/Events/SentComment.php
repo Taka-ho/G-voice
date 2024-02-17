@@ -1,5 +1,6 @@
 <?php
 namespace App\Events;
+use Illuminate\Support\Facades\Log;
 use App\Models\Comment;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -26,7 +27,7 @@ class SentComment implements ShouldBroadcast
      * @param \App\Models\Comment $comment
      */
 
-     public function __construct(string $comment)
+     public function __construct($comment)
     {
         $this->comment = $comment;
     }
@@ -41,6 +42,7 @@ class SentComment implements ShouldBroadcast
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
+
     public function broadcastOn(): array
     {
         return [new Channel('comment')];

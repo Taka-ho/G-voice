@@ -12,7 +12,9 @@ return new class extends Migration
     {
         Schema::create('broadcasting_rooms_comments', function (Blueprint $table) {
             $table->id()->unique();
-            $table->string('comment', 200);
+            $table->unsignedBigInteger('broadcasting_rooms_id')->NotNull();
+            $table->foreign('broadcasting_rooms_id')->references('id')->on('broadcasting_rooms')->onDelete('cascade');
+            $table->string('comment');
             $table->dateTime('created_at');
             $table->dateTime('updated_at');
         });

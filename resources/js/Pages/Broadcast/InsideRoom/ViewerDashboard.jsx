@@ -2,7 +2,7 @@ import React, { useEffect, useState} from 'react';
 import CommentForm from './Comment/CommentForm';
 import CommentList from './Comment/CommentList';
 
-const WebRTCVideoChat = () => {
+const ViewerDashboard = () => {
     const [comments, setComments] = useState([]);
   
     useEffect(() => {
@@ -33,6 +33,7 @@ const WebRTCVideoChat = () => {
             .then((data) => setComments(data));
         });
     };
+
     return (
         <div>
             <div className='comments'>
@@ -43,4 +44,4 @@ const WebRTCVideoChat = () => {
     );
 };
 
-export default WebRTCVideoChat;
+export default ViewerDashboard;
