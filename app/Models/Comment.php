@@ -29,24 +29,24 @@ class Comment extends Model
         $commentText = $jsonData['text'];
         $comment = new Comment();
         $referer = $request->headers->get('referer'); // リクエストの Referer を取得
-        if ($referer) {
-            //refererが配信者・視聴者のどちらかのURLかを判定
-            if (strpos($referer, "http://localhost/broadcast/") !== false) {
-                //視聴者の場合
-                if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
-                    $pattern = "http://localhost/broadcast/stream/";
-                    $broadcastId = str_replace($pattern, "", $referer);
-                    $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
-                    $comment->comment = $request->input('comment', $commentText);
-                    $comment->save();
-                //配信者の場合
-                } else {
-                    $pattern = "http://localhost/broadcast/";
-                    $broadcastId = str_replace($pattern, "", $referer);
-                    $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
-                    $comment->comment = $request->input('comment', $commentText);
-                    $comment->save();
-                }
+        //refererが配信者・視聴者のどちらかのURLかを判定
+        if (strpos($referer, "http://localhost/broadcast/") !== false) {
+            //視聴者の場合
+            if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
+                $pattern = "http://localhost/broadcast/stream/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
+                $comment->comment = $request->input('comment', $commentText);
+                $comment->save();
+                return $comment;
+            //配信者の場合
+            } else {
+                $pattern = "http://localhost/broadcast/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
+                $comment->comment = $request->input('comment', $commentText);
+                $comment->save();
+                return $comment;
             }
         }
     }
