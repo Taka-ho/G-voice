@@ -24,8 +24,6 @@ const ResultOfCode = memo(({ answerOfUser, updateState }) => {
             setReturnData(data[0]);
             updateState(data[1]);
           }
-        } else {
-          console.log('data:', await response.json());
         }
       } catch (error) {
         console.error('Error:', error);

@@ -8,6 +8,7 @@ use App\Models\Broadcast;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class BroadcastController extends Controller
 {
@@ -42,9 +43,18 @@ class BroadcastController extends Controller
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
 
-    public function BroadcastRoom($userId)
+    public function BroadcastRoom(Request $request)
     {
-        return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
+        $accessURL = $request->fullUrl();
+        $userId = Auth::user()->id;
+        $pattern = "http://localhost/broadcast/";
+        $broadcastId = str_replace($pattern, "", $accessURL);
+
+        if(DB::table('broadcasting_rooms')->where($userId) && $broadcastId == $userId) {
+            return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
+        } else {
+            return redirect()->route("broadcast.index");
+        }
     }
 
     public function update(Request $request)

@@ -59,29 +59,22 @@ const ParentComponent = () => {
   );
 };
 
-  const BroadcastRoom = ({ comments, addComment }) => {
-    const [fileNames, setFileNames] = useState([]);
+  const usePusherComments = () => {
     const [pusherComments, setComments] = useState([]);
+    
     Pusher.log = function(message) {
-      // "Event recd"の位置を検索
       const startIndex = message.indexOf('"Event recd"');
       if (startIndex !== -1) {
-        // "Event recd"以降の位置を検索
         const jsonStartIndex = message.indexOf('{', startIndex);
         if (jsonStartIndex !== -1) {
-          // JSON文字列を取り出す
           const jsonString = message.substring(jsonStartIndex);
-          // 末尾までのJSON文字列を取り出す
           const jsonEndIndex = jsonString.lastIndexOf('}');
           const json = jsonString.substring(0, jsonEndIndex + 1);
           try {
             const eventData = JSON.parse(json);
-            // "comment"フィールドが存在するかチェック
             if (eventData.data && eventData.data.comment) {
-              // "comment"フィールドの値を取得してuseStateで管理
               const comments = eventData.data.comment;
               setComments(comments);
-              console.log(pusherComments);
             }
           } catch (error) {
             console.error('Error parsing JSON:', error);
@@ -89,6 +82,13 @@ const ParentComponent = () => {
         }
       }
     };
+
+    return pusherComments;
+  };
+
+  const BroadcastRoom = ({ comments, addComment }) => {
+    const [fileNames, setFileNames] = useState([]);
+    const pusherComments = usePusherComments();
             
       return (
         <div className='all-space'>
@@ -109,34 +109,7 @@ const ParentComponent = () => {
   };
   
   const ViewerDashboard = ({ comments, addComment }) => {
-    const [pusherComments, setComments] = useState([]);
-    Pusher.log = function(message) {
-      // "Event recd"の位置を検索
-      const startIndex = message.indexOf('"Event recd"');
-      if (startIndex !== -1) {
-        // "Event recd"以降の位置を検索
-        const jsonStartIndex = message.indexOf('{', startIndex);
-        if (jsonStartIndex !== -1) {
-          // JSON文字列を取り出す
-          const jsonString = message.substring(jsonStartIndex);
-          // 末尾までのJSON文字列を取り出す
-          const jsonEndIndex = jsonString.lastIndexOf('}');
-          const json = jsonString.substring(0, jsonEndIndex + 1);
-          try {
-            const eventData = JSON.parse(json);
-            // "comment"フィールドが存在するかチェック
-            if (eventData.data && eventData.data.comment) {
-              // "comment"フィールドの値を取得してuseStateで管理
-              const comments = eventData.data.comment;
-              setComments(comments);
-              console.log(pusherComments);
-            }
-          } catch (error) {
-            console.error('Error parsing JSON:', error);
-          }
-        }
-      }
-    };
+    const pusherComments = usePusherComments();
 
     return (
       <div>
