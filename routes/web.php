@@ -16,7 +16,7 @@ use App\Http\Controllers\BroadcastController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', [BroadcastController::class, 'index'])->name('broadcast.index');
+Route::get('/', [BroadcastController::class, 'indexPage'])->name('broadcast.index');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

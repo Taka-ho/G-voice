@@ -12,10 +12,15 @@ use Illuminate\Support\Facades\Log;
 class BroadcastController extends Controller
 {
     //音声配信ルームについてのController
-    public function index()
+    public function indexPage()
     {
-        $broadcasting = DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(15);
-        return Inertia::render('Broadcast/BroadcastingRooms/InfiniteScroll', ['broadcasting' => $broadcasting]);
+        return Inertia::render('Broadcast/BroadcastingRooms/InfiniteScroll');
+    }
+
+    public function rooms()
+    {
+        $broadcasting = DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(30);
+        return response()->json($broadcasting);
     }
 
     private function down(Request $request)

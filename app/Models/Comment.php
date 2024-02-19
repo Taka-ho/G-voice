@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\DB;
 class Comment extends Model
 {
     use HasFactory;
@@ -16,6 +16,28 @@ class Comment extends Model
     public function broadcastingRoom(): BelongsTo
     {
         return $this->belongsTo(BroadcastingRoom::class);
+    }
+
+    public function getComments($request)
+    {
+        // "text" フィールドの値を取得
+        $comment = new Comment();
+        $referer = $request->headers->get('referer'); // リクエストの Referer を取得
+        //refererが配信者・視聴者のどちらかのURLかを判定
+        if (strpos($referer, "http://localhost/broadcast/") !== false) {
+            //視聴者の場合
+            if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
+                $pattern = "http://localhost/broadcast/stream/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
+            //配信者の場合
+            } else {
+                $pattern = "http://localhost/broadcast/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
+                return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
+            }
+        }
     }
 
     public function insertComment($request)

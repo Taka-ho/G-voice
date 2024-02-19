@@ -1,6 +1,7 @@
 import React from 'react';
 
 const CommentList = ({ pusherComments, comments }) => {
+  console.log(comments);
   return (
     <ul>
       {pusherComments.length > 0 ? (

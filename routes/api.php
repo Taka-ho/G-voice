@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\BroadcastController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -23,3 +24,4 @@ Route::get('/comments', [CommentController::class, 'index'])->name('get.broadcas
 
 // 新しいコメント作成エンドポイント
 Route::post('/comments', [CommentController::class, 'store'])->name('store.broadcastingRooms.comment');
+Route::get('/broadcasting', [BroadcastController::class, 'rooms']);
