@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Events\EndBroadcast;
 use App\Models\BroadcastingRoom;
 use App\Models\Broadcast;
 use Inertia\Inertia;
@@ -24,9 +25,21 @@ class BroadcastController extends Controller
         return response()->json($broadcasting);
     }
 
-    private function down(Request $request)
+    public function down(Request $request)
     {
+        $userId = Auth::user()->id;
         
+        event(new EndBroadcast());
+        $referer = $request->headers->get('referer');
+        if (strpos($referer, "http://localhost/broadcast/") !== false) {
+            $pattern = "http://localhost/broadcast/";
+            $broadcastId = str_replace($pattern, "", $referer);
+            if ($userId == $broadcastId) {
+                DB::table('broadcasting_rooms')->where('user_id', $userId)->update(['broadcasting_flag' => 0]);
+            }
+            
+        }
+        return response()->json();
     }
 
     public function createRoom(Request $request)
@@ -50,7 +63,7 @@ class BroadcastController extends Controller
         $pattern = "http://localhost/broadcast/";
         $broadcastId = str_replace($pattern, "", $accessURL);
 
-        if(DB::table('broadcasting_rooms')->where($userId) && $broadcastId == $userId) {
+        if (DB::table('broadcasting_rooms')->where($userId) && $broadcastId == $userId) {
             return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
         } else {
             return redirect()->route("broadcast.index");
@@ -59,7 +72,7 @@ class BroadcastController extends Controller
 
     public function update(Request $request)
     {
-        $user = $request->user(); // ユーザー情報を取得する方法に合わせて変更してください
+        $user = $request->user();
         $code = $request->input('code');
 
         event(new CodeChangeEvent($user, $code));

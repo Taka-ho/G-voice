@@ -32,10 +32,9 @@ Route::middleware('auth')->group(function () {
     })->name('broadcast.start');
 
     Route::post('/broadcast/create', [BroadcastController::class, 'createRoom'])->name('broadcast.create');
-    Route::get('/broadcast/down/{id}', [BroadcastController::class, 'down'])->name('broadcast.down');
+    Route::post('/broadcast/down', [BroadcastController::class, 'down'])->name('broadcast.down');
     Route::get('/broadcast/{roomId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
-
-    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);
+    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio'])->name('broadcast.streamRoom');
 });
 
 require __DIR__.'/auth.php';
