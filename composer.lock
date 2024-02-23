@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "78a6fce6b608b218eff41401dffa48bb",
+    "content-hash": "2297b97c8b4a5eaa03d77095920c142a",
     "packages": [
         {
             "name": "brick/math",
@@ -7980,22 +7980,22 @@
         },
         {
             "name": "laravel/sail",
-            "version": "v1.26.3",
+            "version": "v1.28.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/sail.git",
-                "reference": "fa1ad5fbb03686dfc752bfd1861d86091cc1c32d"
+                "reference": "a05861ca9b04558b1ec1f36cff521a271a259b6c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/sail/zipball/fa1ad5fbb03686dfc752bfd1861d86091cc1c32d",
-                "reference": "fa1ad5fbb03686dfc752bfd1861d86091cc1c32d",
+                "url": "https://api.github.com/repos/laravel/sail/zipball/a05861ca9b04558b1ec1f36cff521a271a259b6c",
+                "reference": "a05861ca9b04558b1ec1f36cff521a271a259b6c",
                 "shasum": ""
             },
             "require": {
-                "illuminate/console": "^9.0|^10.0|^11.0",
-                "illuminate/contracts": "^9.0|^10.0|^11.0",
-                "illuminate/support": "^9.0|^10.0|^11.0",
+                "illuminate/console": "^9.52.16|^10.0|^11.0",
+                "illuminate/contracts": "^9.52.16|^10.0|^11.0",
+                "illuminate/support": "^9.52.16|^10.0|^11.0",
                 "php": "^8.0",
                 "symfony/yaml": "^6.0|^7.0"
             },
@@ -8008,9 +8008,6 @@
             ],
             "type": "library",
             "extra": {
-                "branch-alias": {
-                    "dev-master": "1.x-dev"
-                },
                 "laravel": {
                     "providers": [
                         "Laravel\\Sail\\SailServiceProvider"
@@ -8041,7 +8038,7 @@
                 "issues": "https://github.com/laravel/sail/issues",
                 "source": "https://github.com/laravel/sail"
             },
-            "time": "2023-12-02T18:26:39+00:00"
+            "time": "2024-02-20T15:11:00+00:00"
         },
         {
             "name": "mockery/mockery",

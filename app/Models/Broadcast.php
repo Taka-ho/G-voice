@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Log;
 
 class Broadcast extends Model
 {
@@ -55,6 +58,28 @@ class Broadcast extends Model
             return $userId;
             
         }
+    }
 
+    public function makeContainer ()
+    {
+        $userId = Auth::user()->id;
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post('http://localhost:2375/containers/create', [
+            'Image' => 'Ubuntu'
+        ]);
+        Log::debug($response);
+        if ($response->successful()) {
+            $containerInfo = $response->json();
+            $containerId = $containerInfo['Id'];
+            Redis::set($userId, $containerId);
+            $this->runCode($userId);
+        }
+    }
+
+    private function runCode ($userId)
+    {
+        $containerId = Resis::get($userId);
+        Log::debug($containerId);
     }
 }

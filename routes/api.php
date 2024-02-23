@@ -25,5 +25,4 @@ Route::middleware('web')->group(function(){
     Route::post('/broadcast/down', [BroadcastController::class, 'down'])->name('broadcast.down');
 });
 
-
 Route::get('/broadcasting', [BroadcastController::class, 'rooms']);

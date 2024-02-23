@@ -66,6 +66,7 @@ const ParentComponent = () => {
   );
 };
 
+//Pusherのコメントからコメントのオブジェクトをキャッチしてstateに格納するコンポーネント
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
   

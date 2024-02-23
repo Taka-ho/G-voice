@@ -19,56 +19,41 @@ class Comment extends Model
 
     public function getComments($request)
     {
-        // "text" フィールドの値を取得
-        $comment = new Comment();
-        $referer = $request->headers->get('referer'); // リクエストの Referer を取得
-        //refererが配信者・視聴者のどちらかのURLかを判定
+        $referer = $request->headers->get('referer');
         if (strpos($referer, "http://localhost/broadcast/") !== false) {
-            //視聴者の場合
-            if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
-                $pattern = "http://localhost/broadcast/stream/";
-                $broadcastId = str_replace($pattern, "", $referer);
-                return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
-            //配信者の場合
-            } else {
-                $pattern = "http://localhost/broadcast/";
-                $broadcastId = str_replace($pattern, "", $referer);
-                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
-                return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
-            }
+            $broadcastId = $this->getBroadcastIdFromReferer($referer);
+            return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
         }
     }
-
+    
     public function insertComment($request)
     {
         $requestBody = file_get_contents('php://input');
-    
-        // JSON文字列を連想配列に変換
         $jsonData = json_decode($requestBody, true);
-    
-        // "text" フィールドの値を取得
         $commentText = $jsonData['text'];
-        $comment = new Comment();
-        $referer = $request->headers->get('referer'); // リクエストの Referer を取得
-        //refererが配信者・視聴者のどちらかのURLかを判定
+        $referer = $request->headers->get('referer');
         if (strpos($referer, "http://localhost/broadcast/") !== false) {
-            //視聴者の場合
-            if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
-                $pattern = "http://localhost/broadcast/stream/";
-                $broadcastId = str_replace($pattern, "", $referer);
-                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
-                $comment->comment = $request->input('comment', $commentText);
-                $comment->save();
-                return $comment;
-            //配信者の場合
-            } else {
-                $pattern = "http://localhost/broadcast/";
-                $broadcastId = str_replace($pattern, "", $referer);
-                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
-                $comment->comment = $request->input('comment', $commentText);
-                $comment->save();
-                return $comment;
-            }
+            $broadcastId = $this->getBroadcastIdFromReferer($referer);
+            return $this->saveComment((int)$broadcastId, $commentText);
         }
     }
+
+    private function getBroadcastIdFromReferer($referer)
+    {
+        if (strpos($referer, "http://localhost/broadcast/stream") !== false) {
+            $pattern = "http://localhost/broadcast/stream/";
+        } else {
+            $pattern = "http://localhost/broadcast/";
+        }
+        return str_replace($pattern, "", $referer);
+    }
+    
+    private function saveComment($broadcastId, $commentText)
+    {
+        $comment = new Comment();
+        $comment->broadcasting_rooms_id = $broadcastId;
+        $comment->comment = $commentText;
+        $comment->save();
+        return $comment;
+    }        
 }
