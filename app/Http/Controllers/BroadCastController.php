@@ -47,7 +47,7 @@ class BroadcastController extends Controller
         Inertia::render('Broadcast/NewRoom');
         $broadcast = new Broadcast;
         $userId = $broadcast->registerInfo($request);
-        $broadcast->makeContainer ();
+        $broadcast->manageContainer ();
         return $this->GoToRoom($userId);
     }
 
