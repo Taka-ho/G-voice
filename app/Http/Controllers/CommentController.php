@@ -11,10 +11,9 @@ class CommentController extends Controller
 {
     public function index(Request $request)
     {
-        $comments = new Comment();
-        $commentsOfLive = $comments->getComments($request);
-        event(new SentComment($commentsOfLive));
-        return response()->json($commentsOfLive);
+        $comments = Comment::all();
+        event(new SentComment($comments));
+        return response()->json($comments);
     }
 
     public function store(Request $request)

@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class Comment extends Model
 {
@@ -17,43 +18,36 @@ class Comment extends Model
         return $this->belongsTo(BroadcastingRoom::class);
     }
 
-    public function getComments($request)
-    {
-        $referer = $request->headers->get('referer');
-        if (strpos($referer, "http://localhost/broadcast/") !== false) {
-            $broadcastId = $this->getBroadcastIdFromReferer($referer);
-            return Comment::where('broadcasting_rooms_id', $broadcastId)->get();
-        }
-    }
-    
     public function insertComment($request)
     {
         $requestBody = file_get_contents('php://input');
-        $jsonData = json_decode($requestBody, true);
-        $commentText = $jsonData['text'];
-        $referer = $request->headers->get('referer');
-        if (strpos($referer, "http://localhost/broadcast/") !== false) {
-            $broadcastId = $this->getBroadcastIdFromReferer($referer);
-            return $this->saveComment((int)$broadcastId, $commentText);
-        }
-    }
-
-    private function getBroadcastIdFromReferer($referer)
-    {
-        if (strpos($referer, "http://localhost/broadcast/stream") !== false) {
-            $pattern = "http://localhost/broadcast/stream/";
-        } else {
-            $pattern = "http://localhost/broadcast/";
-        }
-        return str_replace($pattern, "", $referer);
-    }
     
-    private function saveComment($broadcastId, $commentText)
-    {
+        // JSON文字列を連想配列に変換
+        $jsonData = json_decode($requestBody, true);
+    
+        // "text" フィールドの値を取得
+        $commentText = $jsonData['text'];
         $comment = new Comment();
-        $comment->broadcasting_rooms_id = $broadcastId;
-        $comment->comment = $commentText;
-        $comment->save();
-        return $comment;
-    }        
+        $referer = $request->headers->get('referer'); // リクエストの Referer を取得
+        //refererが配信者・視聴者のどちらかのURLかを判定
+        if (strpos($referer, "http://localhost/broadcast/") !== false) {
+            //視聴者の場合
+            if(strpos($referer, "http://localhost/broadcast/stream") !== false) {
+                $pattern = "http://localhost/broadcast/stream/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
+                $comment->comment = $request->input('comment', $commentText);
+                $comment->save();
+                return $comment;
+            //配信者の場合
+            } else {
+                $pattern = "http://localhost/broadcast/";
+                $broadcastId = str_replace($pattern, "", $referer);
+                $comment->broadcasting_rooms_id = $request->input('broadcasting_rooms_id', (int)$broadcastId);
+                $comment->comment = $request->input('comment', $commentText);
+                $comment->save();
+                return $comment;
+            }
+        }
+    }
 }

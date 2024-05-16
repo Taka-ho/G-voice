@@ -16,7 +16,7 @@ use App\Http\Controllers\BroadcastController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', [BroadcastController::class, 'indexPage'])->name('broadcast.index');
+Route::get('/', [BroadcastController::class, 'index'])->name('broadcast.index');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -32,9 +32,10 @@ Route::middleware('auth')->group(function () {
     })->name('broadcast.start');
 
     Route::post('/broadcast/create', [BroadcastController::class, 'createRoom'])->name('broadcast.create');
-    Route::post('/broadcast/down', [BroadcastController::class, 'down'])->name('broadcast.down');
+    Route::get('/broadcast/down/{id}', [BroadcastController::class, 'down'])->name('broadcast.down');
     Route::get('/broadcast/{roomId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
-    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio'])->name('broadcast.streamRoom');
+
+    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);
 });
 
 require __DIR__.'/auth.php';

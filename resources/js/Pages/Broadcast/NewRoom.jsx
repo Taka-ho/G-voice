@@ -35,12 +35,11 @@ export default function NewRoom() {
                     <InputLabel htmlFor="broadcastExplain" value="説明欄" />
 
                     <textarea
-                        id="explain"
+                        id="password"
                         name="broadcastExplain"
                         className="mt-1 block w-full"
                         autoComplete="current-password"
-                        placeholder='説明欄(140字)'
-                        style={{ resize: 'none' }}
+                        placeholder='パスワード'
                         onChange={(e) => setData('broadcastExplain', e.target.value)}
                     />
                 </div>

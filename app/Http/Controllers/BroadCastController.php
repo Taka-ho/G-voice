@@ -3,51 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Events\EndBroadcast;
 use App\Models\BroadcastingRoom;
 use App\Models\Broadcast;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 
 class BroadcastController extends Controller
 {
     //音声配信ルームについてのController
-    public function indexPage()
+    public function index()
     {
-        return Inertia::render('Broadcast/BroadcastingRooms/InfiniteScroll');
+        $broadcasting = DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(15);
+        return Inertia::render('Broadcast/BroadcastingRooms/InfiniteScroll', ['broadcasting' => $broadcasting]);
     }
 
-    public function rooms()
+    private function down(Request $request)
     {
-        $broadcasting = DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(30);
-        return response()->json($broadcasting);
-    }
-
-    public function down(Request $request)
-    {
-        $userId = Auth::user()->id;
         
-        event(new EndBroadcast());
-        $referer = $request->headers->get('referer');
-        if (strpos($referer, "http://localhost/broadcast/") !== false) {
-            $pattern = "http://localhost/broadcast/";
-            $broadcastId = str_replace($pattern, "", $referer);
-            if ($userId == $broadcastId) {
-                DB::table('broadcasting_rooms')->where('user_id', $userId)->update(['broadcasting_flag' => 0]);
-            }
-            
-        }
-        return response()->json();
     }
 
     public function createRoom(Request $request)
     {
         Inertia::render('Broadcast/NewRoom');
-        $broadcast = new Broadcast;
-        $userId = $broadcast->registerInfo($request);
-        $broadcast->manageContainer ();
+        $register = new Broadcast;
+        $userId = $register->registerInfo($request);
         return $this->GoToRoom($userId);
     }
 
@@ -57,23 +37,14 @@ class BroadcastController extends Controller
         return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
     }
 
-    public function BroadcastRoom(Request $request)
+    public function BroadcastRoom($userId)
     {
-        $accessURL = $request->fullUrl();
-        $userId = Auth::user()->id;
-        $pattern = "http://localhost/broadcast/";
-        $broadcastId = str_replace($pattern, "", $accessURL);
-
-        if (DB::table('broadcasting_rooms')->where($userId) && $broadcastId == $userId) {
-            return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
-        } else {
-            return redirect()->route("broadcast.index");
-        }
+        return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
     }
 
     public function update(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user(); // ユーザー情報を取得する方法に合わせて変更してください
         $code = $request->input('code');
 
         event(new CodeChangeEvent($user, $code));
