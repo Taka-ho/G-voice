@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ContextMenu = ({ data, indent, onDelete, onClick }) => {
+const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeData }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [isContextMenuFocused, setContextMenuFocused] = useState(false);
 
@@ -47,11 +47,26 @@ const ContextMenu = ({ data, indent, onDelete, onClick }) => {
     document.body.removeEventListener('click', documentClickHandler);
   };
 
+  const updateNodeById = (node, id, updatedNode) => {
+    if (node.id === id) {
+      return updatedNode;
+    }
+
+    if (node.children) {
+      const updatedChildren = node.children.map(child => updateNodeById(child, id, updatedNode));
+      return { ...node, children: updatedChildren };
+    }
+
+    return node;
+  };
+
   const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'New File' };
-    const newChildren = [...parentNode.children, newFile];
-    parentNode.children = newChildren;
-    setTreeData({ ...treeData });
+    const newFile = { id: Date.now(), name: 'New File', content: '' }; // contentを空の文字列に設定
+    const updatedNode = {
+      ...parentNode,
+      children: [...(parentNode.children || []), newFile]
+    };
+    setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
   };
 
   const addFolder = (parentNode) => {
@@ -65,12 +80,12 @@ const ContextMenu = ({ data, indent, onDelete, onClick }) => {
     const newName = prompt('Enter new name:', node.name);
     if (newName !== null) {
       node.name = newName;
-      setTreeData({ ...treeData });
+      onFileRenamed(node); // ファイル名が変更されたことを親コンポーネントに通知
     }
   };
 
   const isFolder = !data.children;
-
+ 
   const contextMenuContent = contextMenu.visible && (
     <div
       style={{
@@ -128,7 +143,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick }) => {
         </svg>
         {data.name}
       </div>
-      {data.children && (
+      {data.children && Array.isArray(data.children) && (
         <ul>
           {data.children.map((child) => (
             <ContextMenu
@@ -137,6 +152,8 @@ const ContextMenu = ({ data, indent, onDelete, onClick }) => {
               indent={indent + 0.5}
               onDelete={onDelete}
               onClick={onClick}
+              onFileRenamed={onFileRenamed}
+              setTreeData={setTreeData} // setTreeData関数を渡す
             />
           ))}
         </ul>

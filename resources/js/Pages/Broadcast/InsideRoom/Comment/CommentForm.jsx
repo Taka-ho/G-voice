@@ -13,8 +13,13 @@ const CommentForm = ({ onAddComment }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} />
-      <button type="submit">Add Comment</button>
+      <textarea
+      value={text}
+      onChange={(e) => setText(e.target.value)} 
+      style={{ resize: 'none' }}
+      rows={1}
+      />
+      <button type="submit">コメント</button>
     </form>
   );
 };
