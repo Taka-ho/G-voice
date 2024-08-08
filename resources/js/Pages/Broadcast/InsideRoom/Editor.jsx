@@ -1,16 +1,16 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
-import ResultOfCode from './ResultOfCode';
-import _ from 'lodash';
-
+import Terminal from './Terminal';
 import './css/Editor.css';
 import './css/Tab.css';
+
 const Editor = ({ selectedFiles }) => {
   const [fileNames, setFileNames] = useState([]);
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [codeOfUser, setCodeOfUser] = useState([]);
+  const [terminalHeight, setTerminalHeight] = useState(200); // Adjust initial height as needed
 
   const prevProps = useRef();
 
@@ -25,7 +25,7 @@ const Editor = ({ selectedFiles }) => {
         setFileContents(contents);
       }
       if (selectedFiles.length === 1) {
-        setFileNames(prevFileNames => [{id: selectedFiles[0].id, name: selectedFiles[0].name}]); // 新しいファイル名だけを設定
+        setFileNames(prevFileNames => [{ id: selectedFiles[0].id, name: selectedFiles[0].name }]); // 新しいファイル名だけを設定
         contents.push('');
         setFileContents(contents);
       } else if (selectedFiles.length > 1 && prevProps.current) {
@@ -64,33 +64,40 @@ const Editor = ({ selectedFiles }) => {
     setSelectedFileName(fileName);
   };
 
+  const handleHeightChange = (height) => {
+    setTerminalHeight(height);
+  };
+
   return (
-    <>
-      <div style={{ display: 'flex' }}>
-        <div style={{ flex: 1 }}>
-        <Tabs onSelect={handleTabSelect}>
+    <div className="app-container">
+      <div style={{ flex: 1 }}>
+        <Tabs onSelect={handleTabSelect} style={{ width: '90%' }}>
           <TabList>
             {fileNames.map((fileName, index) => (
               <Tab key={fileName.id}>{fileName.name}</Tab>
             ))}
           </TabList>
-            {fileContents.map((item, index) => (
-              <TabPanel key={fileNames.id} value={fileNames[index]}>
-                <div className="editor-space">
-                  <MonacoEditor
-                    language="javascript"
-                    theme="vs"
-                    value={item.content}
-                    onChange={(newValue) => handleOnChange(newValue, index)}
-                  />
-                </div>
-              </TabPanel>
-            ))}
-          </Tabs>
-          </div>
+          {fileContents.map((item, index) => (
+            <TabPanel key={fileNames.id} value={fileNames[index]}>
+              <div className="editor-space" style={{ height: `calc(100vh - ${terminalHeight}px - 10px)` }}>
+                <MonacoEditor
+                  language="javascript"
+                  theme="vs"
+                  value={item.content}
+                  onChange={(newValue) => handleOnChange(newValue, index)}
+                />
+              </div>
+            </TabPanel>
+          ))}
+        </Tabs>
       </div>
-      <ResultOfCode codeOfUser={codeOfUser} updateState={updateState} fetchTrigger={true} />
-    </>
+      <Terminal
+        codeOfUser={codeOfUser}
+        updateState={updateState}
+        fetchTrigger={true}
+        onHeightChange={handleHeightChange}
+      />
+    </div>
   );
 };
 

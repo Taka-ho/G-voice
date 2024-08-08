@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import 'devicon/devicon.min.css';
+import FileIcon from './FileIcon';
 
 const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeData }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const [isContextMenuFocused, setContextMenuFocused] = useState(false);
+  const popupRef = useRef(null);
 
   const clickedFile = () => {
     onClick(data);
@@ -33,15 +36,11 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   };
 
   const closeContextMenu = () => {
-    document.body.addEventListener('click', (e) => {
-      setContextMenu({ visible: false, x: 0, y: 0 });
-      setContextMenuFocused(false);
-      document.body.removeEventListener('click', documentClickHandler);
-    });
-  }
+    document.body.addEventListener('click', documentClickHandler);
+  };
 
   const documentClickHandler = (e) => {
-    if (popupRef.current.contains(e.target)) return;
+    if (popupRef.current && popupRef.current.contains(e.target)) return;
     setContextMenu({ visible: false, x: 0, y: 0 });
     setContextMenuFocused(false);
     document.body.removeEventListener('click', documentClickHandler);
@@ -61,7 +60,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   };
 
   const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'New File', content: '' }; // contentを空の文字列に設定
+    const newFile = { id: Date.now(), name: 'New File', content: '' };
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFile]
@@ -80,14 +79,15 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
     const newName = prompt('Enter new name:', node.name);
     if (newName !== null) {
       node.name = newName;
-      onFileRenamed(node); // ファイル名が変更されたことを親コンポーネントに通知
+      onFileRenamed(node);
     }
   };
 
-  const isFolder = !data.children;
- 
+  const isFolder = data.children && Array.isArray(data.children);
+
   const contextMenuContent = contextMenu.visible && (
     <div
+      ref={popupRef}
       style={{
         position: 'absolute',
         top: isFolder ? contextMenu.y - 15 : contextMenu.y,
@@ -98,15 +98,6 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
       }}
     >
       {isFolder ? (
-        <div className='file-context-menu'>
-          <div className='contextMenu' onClick={() => renameItem(data)}>
-            名前の変更
-          </div>
-          <div className='contextMenu' onClick={() => onDelete(data)}>
-            削除する
-          </div>
-        </div>
-      ) : (
         <div className='folder-context-menu'>
           <div className='contextMenu' onClick={() => renameItem(data)}>
             名前の変更
@@ -121,29 +112,26 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
             削除する
           </div>
         </div>
+      ) : (
+        <div className='file-context-menu'>
+          <div className='contextMenu' onClick={() => renameItem(data)}>
+            名前の変更
+          </div>
+          <div className='contextMenu' onClick={() => onDelete(data)}>
+            削除する
+          </div>
+        </div>
       )}
     </div>
   );
 
   return (
     <li style={{ marginLeft: `${indent}rem` }} onContextMenu={handleContextMenu}>
-      <div className='data' onClick={clickedFile}>
-        <svg
-          width='16'
-          height='16'
-          viewBox='0 0 16 16'
-          className='bi bi-folder'
-          fill='currentColor'
-          xmlns='http://www.w3.org/2000/svg'
-        >
-          <path
-            fillRule='evenodd'
-            d='M2 1a1 1 0 0 1 1-1h3.414l1 1H12a1 1 0 0 1 1 1v1H2V1zm1-1a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-8.172l-1-1H3z'
-          />
-        </svg>
+      <div className='data' onClick={clickedFile} style={{ display: 'flex', alignItems: 'center' }}>
+        <FileIcon fileName={data.name} isFolder={isFolder} />
         {data.name}
       </div>
-      {data.children && Array.isArray(data.children) && (
+      {isFolder && (
         <ul>
           {data.children.map((child) => (
             <ContextMenu
@@ -153,7 +141,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
               onDelete={onDelete}
               onClick={onClick}
               onFileRenamed={onFileRenamed}
-              setTreeData={setTreeData} // setTreeData関数を渡す
+              setTreeData={setTreeData}
             />
           ))}
         </ul>

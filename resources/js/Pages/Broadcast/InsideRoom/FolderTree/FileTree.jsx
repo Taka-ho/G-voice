@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 import '../css/FileTree.scss';
 import ContextMenu from './ContextMenu';
 
+// 拡張子に対応するアイコンのマッピング
+const fileIcons = {
+  js: '/icons/js-icon.png',
+  jsx: '/icons/react-icon.png',
+  ts: '/icons/ts-icon.png',
+  tsx: '/icons/react-icon.png',
+  html: '/icons/html-icon.png',
+  css: '/icons/css-icon.png',
+  // 他の拡張子とアイコンを追加
+};
+
 const FileTree = ({ fileNames, setFileNames }) => {
   const [treeData, setTreeData] = useState(() => {
-    // localStorageからtreeDataを読み込みます
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData ? JSON.parse(storedTreeData) : {
       id: 1,
@@ -14,15 +24,15 @@ const FileTree = ({ fileNames, setFileNames }) => {
           id: 2,
           name: 'Folder 1',
           children: [
-            { id: 3, name: 'File 1', content: [] },
-            { id: 4, name: 'File 2', content: [] },
+            { id: 3, name: 'File 1.js', content: [] },
+            { id: 4, name: 'File 2.tsx', content: [] },
           ],
         },
         {
           id: 5,
           name: 'Folder 2',
           children: [
-            { id: 6, name: 'File 3', content: [] },
+            { id: 6, name: 'File 3.html', content: [] },
           ],
         },
       ],
@@ -76,6 +86,25 @@ const FileTree = ({ fileNames, setFileNames }) => {
       });
       return { ...prevTreeData, children: updatedChildren };
     });
+  };
+
+  const renderTree = (node) => {
+    const ext = node.name.split('.').pop(); // 拡張子を取得
+    const icon = fileIcons[ext]; // 拡張子に対応するアイコンを取得
+
+    return (
+      <li key={node.id}>
+        <div onClick={() => clickedFile(node)} style={{ display: 'flex', alignItems: 'center' }}>
+          {!node.children && icon && <img src={icon} alt={`${ext} icon`} style={{ marginRight: '8px', width: '16px', height: '16px' }} />}
+          {node.name}
+        </div>
+        {node.children && (
+          <ul>
+            {node.children.map((child) => renderTree(child))}
+          </ul>
+        )}
+      </li>
+    );
   };
 
   return (
