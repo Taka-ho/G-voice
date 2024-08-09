@@ -5,6 +5,7 @@ import CommentList from './Comment/CommentList';
 import AudioStreamer from './Audio/AudioStreamer';
 import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
+import Terminal from './Terminal';
 import Pusher from 'pusher-js';
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
@@ -114,25 +115,31 @@ const BroadcastRoom = ({ comments, addComment }) => {
   };
 
   return (
-    <div className='all-space'>
+    <>
       <AudioStreamer />
       <button onClick={handleEndBroadcast}>配信終了</button>
-      <div style={{ display: 'flex' }}>
-      <FileTree
-        fileNames={fileNames}
-        setFileNames={setFileNames}
-      />
-        <div style={{ flex: 1 }}>
-          <Editor selectedFiles={ fileNames } />
-        </div>
-        <div>
-          <CommentList pusherComments={pusherComments} comments={comments} />
-          <CommentForm onAddComment={addComment} />
+      <div className='all-space'>
+        <div style={{ display: 'flex', flex: 1 }}>
+          <FileTree
+            fileNames={fileNames}
+            setFileNames={setFileNames}
+          />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <Editor selectedFiles={fileNames} />
+            <div className="terminal-container">
+              <Terminal />
+            </div>
+          </div>
+          <div style={{ width: '300px', marginLeft: '20px', display: 'flex', flexDirection: 'column' }}>
+            <CommentList pusherComments={pusherComments} comments={comments} />
+            <CommentForm onAddComment={addComment} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
+
 
 const ViewerDashboard = ({ comments, addComment }) => {
   const pusherComments = usePusherComments();

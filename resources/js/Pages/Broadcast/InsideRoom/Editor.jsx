@@ -70,7 +70,7 @@ const Editor = ({ selectedFiles }) => {
 
   return (
     <div className="app-container">
-      <div style={{ flex: 1 }}>
+      <div className="editor-container" style={{ flex: 1 }}>
         <Tabs onSelect={handleTabSelect} style={{ width: '90%' }}>
           <TabList>
             {fileNames.map((fileName, index) => (
@@ -91,12 +91,6 @@ const Editor = ({ selectedFiles }) => {
           ))}
         </Tabs>
       </div>
-      <Terminal
-        codeOfUser={codeOfUser}
-        updateState={updateState}
-        fetchTrigger={true}
-        onHeightChange={handleHeightChange}
-      />
     </div>
   );
 };
