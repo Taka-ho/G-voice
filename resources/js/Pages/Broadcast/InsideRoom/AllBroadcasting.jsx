@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CommentForm from './Comment/CommentForm';
 import CommentList from './Comment/CommentList';
@@ -7,9 +7,9 @@ import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
 import Terminal from './Terminal';
 import Pusher from 'pusher-js';
+
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
-
   useEffect(() => {
     fetch('/api/comments')
       .then((response) => response.json())
@@ -17,18 +17,20 @@ const ParentComponent = () => {
         setComments(data);
       });
 
-      const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
-        cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1'
-      });
-  
-      const channel = pusher.subscribe('comment');
-      channel.bind('SentComment', function(newComment) {
-        setComments(prevComments => [...prevComments, newComment]);
-      });
-      const endChannel = pusher.subscribe('broadcast');
-      endChannel.bind('EndBroadcast', function() {
-        window.location.href = '/';
-      });
+    const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
+      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1'
+    });
+
+    const channel = pusher.subscribe('comment');
+    channel.bind('SentComment', function (newComment) {
+      setComments(prevComments => [...prevComments, newComment]);
+    });
+
+    const endChannel = pusher.subscribe('broadcast');
+    endChannel.bind('EndBroadcast', function () {
+      window.location.href = '/';
+    });
+
   }, []);
 
   const addComment = (newComment) => {
@@ -65,11 +67,11 @@ const ParentComponent = () => {
   );
 };
 
-//Pusherのコメントからコメントのオブジェクトをキャッチしてstateに格納するコンポーネント
+// Pusherのコメントからコメントのオブジェクトをキャッチしてstateに格納するコンポーネント
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
-  
-  Pusher.log = function(message) {
+
+  Pusher.log = function (message) {
     const startIndex = message.indexOf('"Event recd"');
     if (startIndex !== -1) {
       const jsonStartIndex = message.indexOf('{', startIndex);
@@ -92,10 +94,10 @@ const usePusherComments = () => {
   return pusherComments;
 };
 
-const BroadcastRoom = ({ comments, addComment }) => {
+const BroadcastRoom = ({ comments, addComment, containerId }) => {
   const [fileNames, setFileNames] = useState([]);
-
   const pusherComments = usePusherComments();
+
   const handleEndBroadcast = () => {
     if (window.confirm('本当に配信を終了しますか？')) {
       fetch('/api/broadcast/down', {
@@ -106,7 +108,6 @@ const BroadcastRoom = ({ comments, addComment }) => {
           'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
         },
       })
-      
         .then((response) => response.json())
         .catch((error) => {
           console.error('Error:', error);
@@ -114,30 +115,25 @@ const BroadcastRoom = ({ comments, addComment }) => {
     }
   };
 
-  return (
-    <>
-      <AudioStreamer />
-      <button onClick={handleEndBroadcast}>配信終了</button>
-      <div className='all-space'>
-        <div style={{ display: 'flex', flex: 1 }}>
-          <FileTree
-            fileNames={fileNames}
-            setFileNames={setFileNames}
-          />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Editor selectedFiles={fileNames} />
-            <div className="terminal-container">
-              <Terminal />
-            </div>
-          </div>
-          <div style={{ width: '300px', marginLeft: '20px', display: 'flex', flexDirection: 'column' }}>
-            <CommentList pusherComments={pusherComments} comments={comments} />
-            <CommentForm onAddComment={addComment} />
-          </div>
+return (
+  <div className='all-space'>
+    <button onClick={handleEndBroadcast} style={{textAlign:'left'}}>配信終了</button>
+    <AudioStreamer />
+    <div style={{ display: 'flex', flex: 1 }}>
+      <FileTree fileNames={fileNames} setFileNames={setFileNames} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Editor selectedFiles={fileNames} />
+        <div className="terminal-container">
+          <Terminal />
         </div>
       </div>
-    </>
-  );
+      <div className="comment-section">
+        <CommentList pusherComments={pusherComments} comments={comments} />
+        <CommentForm onAddComment={addComment} />
+      </div>
+    </div>
+  </div>
+);
 };
 
 

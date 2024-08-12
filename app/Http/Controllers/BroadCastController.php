@@ -8,7 +8,9 @@ use App\Models\Broadcast;
 use Inertia\Inertia;
 use App\Events\EndBroadcast;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class BroadcastController extends Controller
 {
@@ -22,7 +24,7 @@ class BroadcastController extends Controller
     public function down(Request $request)
     {
         $userId = Auth::user()->id;
-        
+
         event(new EndBroadcast());
         $referer = $request->headers->get('referer');
         if (strpos($referer, "http://localhost/broadcast/") !== false) {
@@ -36,18 +38,39 @@ class BroadcastController extends Controller
         return response()->json();
     }
 
-    public function createRoom(Request $request)
+    public function GoToRoom($userIdAndContainerId)
     {
-        Inertia::render('Broadcast/NewRoom');
-        $register = new Broadcast;
-        $userId = $register->registerInfo($request);
-        return $this->GoToRoom($userId);
-    }
+        // Decode the JSON content from the response
+        $data = json_decode($userIdAndContainerId->getContent(), true);
+    
+        // Log the decoded data structure
+        Log::debug('Decoded data structure: ' . print_r($data, true));
+    
+        // Extract userId
+        if (isset($data['userId'])) {
+            $userId = $data['userId'];
+        } else {
+            Log::error('userId not found');
+            return response()->json(['error' => 'userId not found'], 400);
+        }
+    
+        // Extract containerId from nested structure
+        if (isset($data['containerId']['original']['containerId'])) {
+            $containerId = $data['containerId']['original']['containerId'];
+        } else {
+            Log::error('containerId not found');
+            return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 400);
+        }
 
-    public function GoToRoom($userId)
-    {
-        $roomId = DB::table('broadcasting_rooms')->where('user_id', $userId)->first();
-        return redirect()->route("broadcast.insideRoom", ['roomId' => $roomId->id]);
+        Log::debug('containerIdの値：' . $containerId);
+    
+        if ($userId) {
+            Log::debug('Room found: ' . print_r($userId, true));
+            return redirect()->route("broadcast.insideRoom", ['roomId' => $userId, 'containerId' => $containerId]);
+        } else {
+            Log::error('No room found for user_id: ' . $userId);
+            return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 404);
+        }
     }
 
     public function BroadcastRoom(Request $request)
@@ -56,12 +79,47 @@ class BroadcastController extends Controller
         $userId = Auth::user()->id;
         $pattern = "http://localhost/broadcast/";
         $broadcastId = str_replace($pattern, "", $accessURL);
-
-        if (DB::table('broadcasting_rooms')->where($userId) && $broadcastId == $userId) {
-            return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
+    
+        if (DB::table('broadcasting_rooms')->where('user_id', $userId)->exists()) {
+            $containerId = Redis::get("user_to_container", $userId);
+            return Inertia::render("Broadcast/InsideRoom/AllBroadcasting", [
+                'userId' => $userId,
+                'containerId' => $containerId,
+            ]);
         } else {
             return redirect()->route("broadcast.index");
         }
+    }
+    
+
+    public function createRoom(Request $request)
+    {
+        Inertia::render('Broadcast/NewRoom');
+        $register = new Broadcast;
+        $userId = $register->registerInfo($request);
+        return $this->GoToRoom($userId);
+    }
+
+    public function executeCommandOfTerminal(Request $request)
+    {
+        $command = $request->input('command');
+        $containerName = 'terminal'; // The name of your Docker container
+
+        // Create the command to be executed inside the Docker container
+        $dockerCommand = ['docker', 'exec', $containerName, 'bash', '-c', $command];
+
+        $process = new Process($dockerCommand);
+        $process->run();
+
+        // Check if the command was successful
+        if (!$process->isSuccessful()) {
+            //Log::debug(response()->json(['error' => $process->getErrorOutput()], 500));
+            return response()->json(['error' => $process->getErrorOutput()], 500);
+        }
+
+        // Return the output of the command
+        //Log::debug(response()->json(['output' => $process->getOutput()]));
+        return response()->json(['output' => $process->getOutput()]);
     }
 
     public function streamAudio(Request $request)
@@ -69,36 +127,4 @@ class BroadcastController extends Controller
         return Inertia::render('Broadcast/InsideRoom/AllBroadcasting');
     }
 
-    public function runCode(Request $request)
-    {
-        // リクエストの全データを取得
-        $requestData = $request->all();
-        // codeOfUserからファイルの対応関係を取得
-        $treeData = json_decode($requestData['treeData'], true);
-        //Log::debug(reset($treeData['children']));
-        $codeOfUser = $requestData['codeOfUser'];
-
-        $usersCodes = $this->updateTreeDataContent($treeData, $codeOfUser);
-        //Log::debug($usersCodes);
-        $triggerFilePath = $request->input('triggerFilePath');
-        $runCode = new Broadcast;
-        $runCode->setDir($usersCodes, $triggerFilePath);
-    }    
-    
-    function updateTreeDataContent(&$treeData, $codeOfUser) {
-        foreach ($treeData['children'] as &$child) {
-            if (isset($child['children'])) {
-                // 子フォルダがある場合、再帰的に処理
-                $this->updateTreeDataContent($child, $codeOfUser);
-            } else {
-                // ファイルのIDをチェック
-                $fileIndex = array_search($child['id'], $codeOfUser['files']);
-                if ($fileIndex !== false) {
-                    // 該当するファイルIDが見つかった場合、contentを更新
-                    $child['content'] = $codeOfUser['content'][$fileIndex];
-                }
-            }
-        }
-        return $treeData;
-    }
 }

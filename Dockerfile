@@ -30,7 +30,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Composer による依存関係のインストール
 RUN composer update && composer install && composer require guzzlehttp/guzzle
-
+RUN composer require laravel/nova
 # Composer のオートロードの再生成
 RUN composer dump-autoload
 

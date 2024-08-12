@@ -24,6 +24,7 @@ services:
             - sail
         depends_on:
             - mysql
+            - redis
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -48,6 +49,16 @@ services:
                 - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
+    laravel-echo-server:
+        build:
+            context: .             # インデントの修正
+            dockerfile: Dockerfile.echo-server
+        depends_on:
+            - redis
+        volumes:
+            - ./laravel-echo-server.json:/app/laravel-echo-server.json
+        networks:
+            - sail
     redis:
         image: 'redis:latest'
         ports:

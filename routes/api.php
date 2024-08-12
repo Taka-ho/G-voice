@@ -27,3 +27,5 @@ Route::middleware('web')->group(function(){
 Route::get('/broadcast/runCode', [BroadcastController::class, 'runCode'])->name('broadcast.runCode');
 Route::post('/broadcast/runCode', [BroadcastController::class, 'runCode']);
 Route::get('/broadcasting', [BroadcastController::class, 'rooms']);
+
+Route::post('/execute-command', [BroadcastController::class, 'executeCommand']);

@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use DragonCode\Support\Facades\Helpers\Boolean;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Jobs\RunContainerProcess;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Log;
+
 use PharData;
 /**
  * ディレクトリの中身を再帰的にアーカイブに追加する関数
@@ -47,6 +48,8 @@ class Broadcast extends Model
     public function registerInfo($request)
     {
         $userId = Auth::user()->id;
+        $containerId = $this->startContainer();
+
         if ($this->checkBroadcasting($userId))
         {
             $title = $request->title;
@@ -61,96 +64,58 @@ class Broadcast extends Model
                 $broadcastingFlag,
                 $startOfBroadcast
             ]);
-            return $userId;
+
+            // RedisにユーザーIDとコンテナIDを保存
+            Redis::hset('user_to_container', $userId, $containerId);
+            return response()->json(['userId' => $userId, 'containerId' => $containerId]);
         } else {
-            return $userId;
+            // RedisにユーザーIDとコンテナIDを保存
+            Redis::hset('user_to_container', $userId, $containerId);
+            return response()->json(['userId' => $userId, 'containerId' => $containerId], 200);
         }
     }
 
-    public function setDir($usersCodes, $triggerFilePath)
+    public function startContainer()
     {
-        // ルートディレクトリ名の生成
-        $rootDirName = Str::uuid();
-        $rootDirPath = 'usersDir/' . $rootDirName;
-        $this->createDirectory($rootDirPath);
+        $containerName = Str::uuid()->toString(); // ユニークな名前を生成
     
-        // idが1のディレクトリをrootDirName直下に配置する
-        if (isset($usersCodes['id']) && $usersCodes['name']) {
-            $this->processCode($usersCodes, $rootDirPath, true);
-        } else {
-            // 子要素の処理
-            foreach ($usersCodes['children'] as $code) {
-                $this->processCode($code, $rootDirPath);
-            }
+        // コンテナ作成パラメータ
+        $param = [
+            'Image' => 'ubuntu',
+            'name' => $containerName, // ここでコンテナ名を設定
+        ];
+    
+        $createUrl = "http://host.docker.internal:2375/containers/create";
+    
+        // コンテナ作成リクエスト
+        $responseOfCreated = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($createUrl, $param);
+        // コンテナ作成が成功したか確認
+        if ($responseOfCreated->failed()) {
+            return response()->json(['error' => 'Failed to create container'], 500);
         }
-        $this->controllerOfContainer($rootDirPath, $triggerFilePath);
+        // コンテナIDを取得
+        $containerId = $responseOfCreated->json('Id');
+        $startURL = "http://host.docker.internal:2375/containers/{$containerId}/start";
+    
+        // コンテナ起動リクエスト
+        $responseOfStarted = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post($startURL);
+    
+        // コンテナ起動が成功したか確認
+        if ($responseOfStarted->failed()) {
+            return response()->json(['error' => 'Failed to start container'], 500);
+        }
+    
+        return response()->json(['containerId' => $containerId]);
     }
-    
-    private function processCode($code, $parentDirPath, $isRoot = false)
-    {
-        if ($isRoot) {
-            // idが1のディレクトリの場合
-            $dirName = $code['name']; // リクエストで送られてくるフォルダ名を使用
-            $dirPath = $parentDirPath . '/' . $dirName; // エスケープ処理を削除
-            $this->createDirectory($dirPath);
-    
-            // 子要素の再帰的処理
-            if (isset($code['children'])) {
-                foreach ($code['children'] as $childCode) {
-                    $this->processCode($childCode, $dirPath);
-                }
-            }
-        } else {
-            if (isset($code['children'])) {
-                // 子要素がディレクトリの場合
-                $dirName = $code['name']; // リクエストで送られてくるフォルダ名を使用
-                $dirPath = $parentDirPath . '/' . $dirName; // エスケープ処理を削除
-                $this->createDirectory($dirPath);
-    
-                // 子要素の再帰的処理
-                foreach ($code['children'] as $childCode) {
-                    $this->processCode($childCode, $dirPath);
-                }
-            } else {
-                // 子要素がファイルの場合
-                $fileName = $code['name'];
-                $filePath = $parentDirPath . '/' . $fileName; // エスケープ処理を削除
-                $content = isset($code['content']) ? $code['content'] : '';
-                $this->createFile($filePath, $content);
-            }
-        }
-    }
-    
-    private function createDirectory($path)
-    {
-        if (!file_exists($path)) {
-            Storage::makeDirectory($path);
-        }
-    }
-    
-    private function createFile($filePath, $content)
-    {
-        // $content が配列の場合は文字列に変換する
-        if (is_array($content)) {
-            // 例として、配列をJSON文字列に変換する
-            $content = json_encode($content);
-        }
-    
-        // ファイル名に拡張子が含まれているかチェック
-        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-        if (empty($extension)) {
-            // 拡張子がない場合は.txtを追加
-            $filePath .= '.txt';
-        }
-    
-        Storage::put($filePath, $content);
-    }        
 
-    //実行する前にホストOS上でdocker pull ubuntu:latestコマンドを実行してUbuntuイメージを取得する必要がある。
-    public function controllerOfContainer($rootDirPath, $triggerFilePath)
+
+    public function executeCommand($command)
     {
-        RunContainerProcess::dispatch($rootDirPath, $triggerFilePath);
+
     }
+
     public function removeContainer()
     {
         

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../css/FileTree.scss';
 import ContextMenu from './ContextMenu';
+import Echo from "laravel-echo";
+import io from 'socket.io-client';
 
 // 拡張子に対応するアイコンのマッピング
 const fileIcons = {
@@ -13,7 +15,13 @@ const fileIcons = {
   // 他の拡張子とアイコンを追加
 };
 
-const FileTree = ({ fileNames, setFileNames }) => {
+const echo = new Echo({
+  broadcaster: 'socket.io',
+  host: window.location.hostname + ':6001',
+  client: io,
+});
+
+const FileTree = ({ fileNames, setFileNames, containerId }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData ? JSON.parse(storedTreeData) : {
@@ -38,6 +46,19 @@ const FileTree = ({ fileNames, setFileNames }) => {
       ],
     };
   });
+
+  useEffect(() => {
+    const channelName = `file-changes.${containerId}`;
+    const channel = echo.private(channelName);
+    channel.listen('FileChanged', (data) => {
+      // ... (treeDataの更新ロジック)
+      // data.filePathとdata.containerIdに基づいてtreeDataを更新
+    });
+  
+    return () => {
+      channel.leaveChannel(channelName);
+    };
+  }, [containerId]);
 
   useEffect(() => {
     localStorage.setItem('treeData', JSON.stringify(treeData));
@@ -78,6 +99,9 @@ const FileTree = ({ fileNames, setFileNames }) => {
 
   const handleFileRenamed = (updatedNode) => {
     setTreeData(prevTreeData => {
+      if (!prevTreeData.children) {
+        return prevTreeData;
+      }
       const updatedChildren = prevTreeData.children.map(child => {
         if (child.id === updatedNode.id) {
           return updatedNode;
@@ -89,6 +113,9 @@ const FileTree = ({ fileNames, setFileNames }) => {
   };
 
   const renderTree = (node) => {
+    if (!node) {
+      return null;
+    }
     const ext = node.name.split('.').pop(); // 拡張子を取得
     const icon = fileIcons[ext]; // 拡張子に対応するアイコンを取得
 

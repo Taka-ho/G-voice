@@ -1,30 +1,30 @@
-import React, { useEffect, useRef } from 'react';
-import io from 'socket.io-client';
-import './css/Terminal.css';
+import React, { useState } from 'react';
+import axios from 'axios';
 
 const TerminalComponent = () => {
-  const terminalRef = useRef(null);
+  const [command, setCommand] = useState('');
+  const [output, setOutput] = useState('');
 
-  useEffect(() => {
-  
-    // WebSocketクライアントの接続
-    const socket = io('ws://localhost:6001'); // LaravelのWebSocketサーバーのURL
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-    });
-
-    socket.on('message', (data) => {
-      term.write(data);
-    });
-
-  }, []);
+  const executeCommand = async () => {
+    try {
+      const response = await axios.post('/api/execute-command', { command });
+      setOutput(response.data.output);
+    } catch (error) {
+      setOutput(error.response.data.error || 'An error occurred');
+    }
+  };
 
   return (
-      <div className='terminal-container'>
-        <form>
-          <textarea className='command-field' rows={1}></textarea>
-        </form>
-      </div>
+    <div className='terminal-menu'>
+      <input
+        type="text"
+        value={command}
+        onChange={(e) => setCommand(e.target.value)}
+        placeholder="Enter command"
+      />
+      <button onClick={executeCommand}>Execute</button>
+      <pre>{output}</pre>
+    </div>
   );
 };
 

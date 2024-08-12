@@ -1,44 +1,70 @@
-.app-container {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    background-color: white;
-    color: black;
-  }
-.command-field {
-    resize: none;
-    width: 70%;
-}  
-  .terminal-container {
-    flex: 1;
-    background-color: white;
-    color: black;
-    font-family: monospace;
-    font-size: 14px;
-    overflow: auto;
-  }
+.all-space {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
-  .terminal-container {
-    position: relative;
-  }
-  
-  .command-field {
-    position: absolute;
-    width: 100%;
-    resize: none;
-    }
-  
-  .terminal-container .xterm-viewport {
-    background-color: white;
-    color: black;
-  }
-  
-  .terminal-container .xterm-cursor {
-    background-color: black;
-    color: white;
-  }
-  
-  .terminal-container .xterm-rows {
-    padding: 10px;
-  }
-  
+.editor-space {
+  flex: 1;
+  overflow: auto;
+}
+
+.comment-section {
+  width: 300px; /* Adjust width as needed */
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-section > * {
+  margin-bottom: 10px; /* Add spacing between CommentList and CommentForm */
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  background-color: white;
+  color: black;
+  overflow: hidden; /* Prevent overflow */
+}
+
+.command-field {
+  resize: none;
+  width: 70%;
+}
+
+.terminal-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Align terminal to the bottom */
+  background-color: white;
+  color: black;
+  font-family: monospace;
+  font-size: 14px;
+  overflow: auto;
+  height: 50px; /* Adjust to match the height of CommentForm */
+}
+
+.terminal-menu {
+  margin: 5%;
+}
+
+.terminal-container .xterm-viewport {
+  background-color: white;
+  color: black;
+}
+
+.terminal-container .xterm-cursor {
+  background-color: black;
+  color: white;
+}
+
+.terminal-container .xterm-rows {
+  padding: 10px;
+}
+
+.command-field {
+  position: absolute;
+  width: 100%;
+  resize: none;
+}

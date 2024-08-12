@@ -10,7 +10,7 @@ const Editor = ({ selectedFiles }) => {
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [codeOfUser, setCodeOfUser] = useState([]);
-  const [terminalHeight, setTerminalHeight] = useState(200); // Adjust initial height as needed
+  const [terminalHeight, setTerminalHeight] = useState(250); // Adjust initial height as needed
 
   const prevProps = useRef();
 
@@ -43,6 +43,12 @@ const Editor = ({ selectedFiles }) => {
     setSelectedFileNames();
   }, [selectedFiles]);
 
+  useEffect(() => {
+    // selectedFileNameの変更を検知する
+    console.log('selectedFileName changed:', selectedFileName);
+    handleHeight(); // selectedFileNameの変更を検知したら、handleHeightを呼び出す
+  }, [selectedFileName]);
+
   const handleOnChange = (newValue, index) => {
     const updatedContents = fileContents.map((item, i) =>
       i === index ? { ...item, content: newValue } : item
@@ -68,9 +74,17 @@ const Editor = ({ selectedFiles }) => {
     setTerminalHeight(height);
   };
 
+  const handleHeight = () => {
+    if (selectedFileName === '') {
+      return '90vh'; // 文字列で返す
+    } else {
+      return '100%'; // 100%に設定する
+    }
+  };
+
   return (
     <div className="app-container">
-      <div className="editor-container" style={{ flex: 1 }}>
+      <div className="editor-container" style={{ flex: 1, height: handleHeight() }}>
         <Tabs onSelect={handleTabSelect} style={{ width: '90%' }}>
           <TabList>
             {fileNames.map((fileName, index) => (

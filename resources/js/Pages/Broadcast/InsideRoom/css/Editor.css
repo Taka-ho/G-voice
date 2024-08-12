@@ -1,26 +1,51 @@
 .all-space {
   display: flex;
   flex-direction: column;
-  height: 100vh;
 }
 
 .editor-space {
   flex: 1;
-  height: 90vh; /* Adjust height as needed */
   overflow: auto;
 }
 
-.terminal-container {
-  height: 10vh;
-  overflow: hidden;
-}
-
 .comment-section {
-  width: 300px; /* Adjust width as needed */
+  width: 300px;
   display: flex;
   flex-direction: column;
 }
 
 .comment-section > * {
-  margin-bottom: 10px; /* Add spacing between CommentList and CommentForm */
+  margin-bottom: 10px;
+}
+
+.terminal-container {
+  background-color: white;
+  color: black;
+  font-family: monospace;
+  font-size: 14px;
+  overflow: auto;
+  height: 200px; /* Adjust height as needed */
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.terminal-container .xterm-viewport {
+  background-color: white;
+  color: black;
+}
+
+.terminal-container .xterm-cursor {
+  background-color: black;
+  color: white;
+}
+
+.terminal-container .xterm-rows {
+  padding: 10px;
+}
+
+.command-field {
+  width: 100%;
+  resize: none;
+  position: absolute;
+  bottom: 0;
 }
