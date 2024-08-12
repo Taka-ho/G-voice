@@ -66,7 +66,10 @@ class BroadcastController extends Controller
     
         if ($userId) {
             Log::debug('Room found: ' . print_r($userId, true));
-            return redirect()->route("broadcast.insideRoom", ['roomId' => $userId, 'containerId' => $containerId]);
+            return redirect()->route("broadcast.insideRoom", [
+                'userId' => $userId, 
+                'containerId' => $containerId
+            ]);
         } else {
             Log::error('No room found for user_id: ' . $userId);
             return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 404);

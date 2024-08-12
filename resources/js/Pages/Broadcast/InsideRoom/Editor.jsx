@@ -10,7 +10,7 @@ const Editor = ({ selectedFiles }) => {
   const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [codeOfUser, setCodeOfUser] = useState([]);
-  const [terminalHeight, setTerminalHeight] = useState(250); // Adjust initial height as needed
+  const [terminalHeight, setTerminalHeight] = useState(260); // Adjust initial height as needed
 
   const prevProps = useRef();
 
@@ -45,7 +45,6 @@ const Editor = ({ selectedFiles }) => {
 
   useEffect(() => {
     // selectedFileNameの変更を検知する
-    console.log('selectedFileName changed:', selectedFileName);
     handleHeight(); // selectedFileNameの変更を検知したら、handleHeightを呼び出す
   }, [selectedFileName]);
 
