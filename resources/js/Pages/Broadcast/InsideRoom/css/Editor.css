@@ -5,6 +5,7 @@
 
 .editor-space {
   flex: 1;
+  height: 90vh;
   overflow: auto;
 }
 

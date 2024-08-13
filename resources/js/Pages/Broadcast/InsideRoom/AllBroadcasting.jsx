@@ -1,15 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import CommentForm from './Comment/CommentForm';
-import CommentList from './Comment/CommentList';
-import AudioStreamer from './Audio/AudioStreamer';
-import FileTree from './FolderTree/FileTree';
-import Editor from './Editor';
 import BroadcastRoom from './BroadcastRoom';
 import ViewerDashboard from './ViewerDashboard';
-import Terminal from './Terminal';
 import Pusher from 'pusher-js';
-import { Head, Link, useForm } from '@inertiajs/react';
 
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
@@ -63,6 +56,8 @@ const ParentComponent = () => {
 
   // ファイルコンテンツを更新する関数
   const updateFileContents = (fileName, newContent) => {
+    // This should update the contents for the specific file in `FileTree`
+    // Ensure the updated state is correctly handled
     setFileContents(prevContents => ({
       ...prevContents,
       [fileName]: newContent

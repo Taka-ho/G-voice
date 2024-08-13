@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '../css/FileTree.scss';
 import ContextMenu from './ContextMenu';
-import Echo from "laravel-echo";
-import io from 'socket.io-client';
+import '../css/FileTree.scss';
 
 const fileIcons = {
   js: '/icons/js-icon.png',
@@ -13,13 +11,7 @@ const fileIcons = {
   css: '/icons/css-icon.png',
 };
 
-const echo = new Echo({
-  broadcaster: 'socket.io',
-  host: window.location.hostname + ':6001',
-  client: io,
-});
-
-const FileTree = ({ fileNames, fileContents, setFileNames, containerId }) => {
+const FileTree = ({ fileNames, fileContents, setFileNames, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData ? JSON.parse(storedTreeData) : {
@@ -66,22 +58,20 @@ const FileTree = ({ fileNames, fileContents, setFileNames, containerId }) => {
       const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
       if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        updateSelectedFileName(openedFile.name);
-        updateFileContents(fileContents[openedFile.id] || '');
+        updateFileContents(openedFile.name, fileContents[openedFile.name] || '');
       }
     }
   };
-  
+
   const handleFileDeleted = (nodeId) => {
     const updatedTreeData = deleteNodeById(treeData, nodeId);
-    setTreeData({ ...updatedTreeData });
+    setTreeData(updatedTreeData);
   };
 
   const handleFileRenamed = (updatedNode) => {
     setTreeData((prevTreeData) => {
-      if (!prevTreeData.children) {
-        return prevTreeData;
-      }
+      if (!prevTreeData.children) return prevTreeData;
+
       const updatedChildren = prevTreeData.children.map((child) => {
         if (child.id === updatedNode.id) {
           return updatedNode;
@@ -96,12 +86,13 @@ const FileTree = ({ fileNames, fileContents, setFileNames, containerId }) => {
     if (!node) {
       return null;
     }
-    const ext = node.name.split('.').pop(); // Get file extension
-    const icon = fileIcons[ext]; // Get corresponding icon
+    const ext = node.name.split('.').pop();
+    const icon = fileIcons[ext];
 
     return (
       <li key={node.id}>
         <div onClick={() => clickedFile(node)} style={{ display: 'flex', alignItems: 'center' }}>
+          {icon && <img src={icon} alt={ext} style={{ marginRight: '8px' }} />}
           {node.name}
         </div>
         {node.children && (
@@ -112,7 +103,7 @@ const FileTree = ({ fileNames, fileContents, setFileNames, containerId }) => {
       </li>
     );
   };
-  console.log(fileContents);
+
   return (
     <div style={{ display: 'flex-grow' }}>
       <div style={{ marginRight: '1rem' }}>
