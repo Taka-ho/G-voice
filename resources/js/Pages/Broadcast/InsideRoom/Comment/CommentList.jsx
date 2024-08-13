@@ -1,8 +1,6 @@
 import React from 'react';
 import '.././css/CommentList.css';
 const CommentList = ({ pusherComments, comments }) => {
-  console.log(comments);
-  console.log(pusherComments);
   return (
     <div className='comment-list'>
       <ul>

@@ -59,7 +59,7 @@ class BroadcastController extends Controller
             $containerId = $data['containerId']['original']['containerId'];
         } else {
             Log::error('containerId not found');
-            return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 400);
+            return response()->json(['error' => 'あああ'], 400);
         }
 
         Log::debug('containerIdの値：' . $containerId);

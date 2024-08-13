@@ -4,7 +4,6 @@ import ContextMenu from './ContextMenu';
 import Echo from "laravel-echo";
 import io from 'socket.io-client';
 
-// 拡張子に対応するアイコンのマッピング
 const fileIcons = {
   js: '/icons/js-icon.png',
   jsx: '/icons/react-icon.png',
@@ -12,7 +11,6 @@ const fileIcons = {
   tsx: '/icons/react-icon.png',
   html: '/icons/html-icon.png',
   css: '/icons/css-icon.png',
-  // 他の拡張子とアイコンを追加
 };
 
 const echo = new Echo({
@@ -21,7 +19,7 @@ const echo = new Echo({
   client: io,
 });
 
-const FileTree = ({ fileNames, setFileNames, containerId }) => {
+const FileTree = ({ fileNames, fileContents, setFileNames, containerId }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData ? JSON.parse(storedTreeData) : {
@@ -35,30 +33,10 @@ const FileTree = ({ fileNames, setFileNames, containerId }) => {
             { id: 3, name: 'File 1.js', content: [] },
             { id: 4, name: 'File 2.tsx', content: [] },
           ],
-        },
-        {
-          id: 5,
-          name: 'Folder 2',
-          children: [
-            { id: 6, name: 'File 3.html', content: [] },
-          ],
-        },
-      ],
+        }
+      ]
     };
   });
-
-  useEffect(() => {
-    const channelName = `file-changes.${containerId}`;
-    const channel = echo.private(channelName);
-    channel.listen('FileChanged', (data) => {
-      // ... (treeDataの更新ロジック)
-      // data.filePathとdata.containerIdに基づいてtreeDataを更新
-    });
-  
-    return () => {
-      channel.leaveChannel(channelName);
-    };
-  }, [containerId]);
 
   useEffect(() => {
     localStorage.setItem('treeData', JSON.stringify(treeData));
@@ -88,21 +66,23 @@ const FileTree = ({ fileNames, setFileNames, containerId }) => {
       const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
       if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
+        updateSelectedFileName(openedFile.name);
+        updateFileContents(fileContents[openedFile.id] || '');
       }
     }
   };
-
+  
   const handleFileDeleted = (nodeId) => {
     const updatedTreeData = deleteNodeById(treeData, nodeId);
     setTreeData({ ...updatedTreeData });
   };
 
   const handleFileRenamed = (updatedNode) => {
-    setTreeData(prevTreeData => {
+    setTreeData((prevTreeData) => {
       if (!prevTreeData.children) {
         return prevTreeData;
       }
-      const updatedChildren = prevTreeData.children.map(child => {
+      const updatedChildren = prevTreeData.children.map((child) => {
         if (child.id === updatedNode.id) {
           return updatedNode;
         }
@@ -116,13 +96,12 @@ const FileTree = ({ fileNames, setFileNames, containerId }) => {
     if (!node) {
       return null;
     }
-    const ext = node.name.split('.').pop(); // 拡張子を取得
-    const icon = fileIcons[ext]; // 拡張子に対応するアイコンを取得
+    const ext = node.name.split('.').pop(); // Get file extension
+    const icon = fileIcons[ext]; // Get corresponding icon
 
     return (
       <li key={node.id}>
         <div onClick={() => clickedFile(node)} style={{ display: 'flex', alignItems: 'center' }}>
-          {!node.children && icon && <img src={icon} alt={`${ext} icon`} style={{ marginRight: '8px', width: '16px', height: '16px' }} />}
           {node.name}
         </div>
         {node.children && (
@@ -133,7 +112,7 @@ const FileTree = ({ fileNames, setFileNames, containerId }) => {
       </li>
     );
   };
-
+  console.log(fileContents);
   return (
     <div style={{ display: 'flex-grow' }}>
       <div style={{ marginRight: '1rem' }}>

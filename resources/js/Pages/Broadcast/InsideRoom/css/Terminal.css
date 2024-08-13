@@ -45,17 +45,13 @@
   height: 50px; /* Adjust to match the height of CommentForm */
 }
 
-.terminal-menu {
-  margin: 5%;
-}
-
 .terminal-container .xterm-viewport {
   background-color: white;
   color: black;
 }
 
 .terminal-container .xterm-cursor {
-  background-color: black;
+  background-color: white;
   color: white;
 }
 
@@ -67,4 +63,36 @@
   position: absolute;
   width: 100%;
   resize: none;
+}
+
+.terminal-menu {
+  background-color: white;
+  color: #fff;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.terminal-menu input {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.terminal-menu button {
+  background-color: #007acc;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.terminal-menu pre {
+  background-color: black;
+  overflow-x: auto;
+  font-family: monospace;
 }

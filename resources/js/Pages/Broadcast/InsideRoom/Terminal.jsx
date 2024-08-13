@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './css/Terminal.css';
 
 const TerminalComponent = () => {
   const [command, setCommand] = useState('');
@@ -14,16 +15,24 @@ const TerminalComponent = () => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // 新しく追加した行
+      executeCommand();
+    }
+  };
+
   return (
-    <div className='terminal-menu'>
+    <div className="terminal-menu">
+      <pre><h1>{output}</h1></pre>
       <input
         type="text"
         value={command}
         onChange={(e) => setCommand(e.target.value)}
+        onKeyPress={handleKeyPress}
         placeholder="Enter command"
       />
-      <button onClick={executeCommand}>Execute</button>
-      <pre>{output}</pre>
+      <button onClick={executeCommand}>実行</button>
     </div>
   );
 };

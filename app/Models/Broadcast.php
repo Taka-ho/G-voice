@@ -81,7 +81,7 @@ class Broadcast extends Model
     
         // コンテナ作成パラメータ
         $param = [
-            'Image' => 'ubuntu',
+            'Image' => 'users-container',
             'name' => $containerName, // ここでコンテナ名を設定
         ];
     
@@ -90,6 +90,7 @@ class Broadcast extends Model
         // コンテナ作成リクエスト
         $responseOfCreated = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($createUrl, $param);
+        Log::debug('$responseOfCreatedの値:'.$responseOfCreated->body());
         // コンテナ作成が成功したか確認
         if ($responseOfCreated->failed()) {
             return response()->json(['error' => 'Failed to create container'], 500);
@@ -101,7 +102,7 @@ class Broadcast extends Model
         // コンテナ起動リクエスト
         $responseOfStarted = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($startURL);
-    
+        Log::debug('$responseOfStartedの値'.$responseOfStarted);
         // コンテナ起動が成功したか確認
         if ($responseOfStarted->failed()) {
             return response()->json(['error' => 'Failed to start container'], 500);
@@ -113,7 +114,7 @@ class Broadcast extends Model
 
     public function executeCommand($command)
     {
-
+        
     }
 
     public function removeContainer()
