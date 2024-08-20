@@ -90,7 +90,7 @@ class Broadcast extends Model
         // コンテナ作成リクエスト
         $responseOfCreated = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($createUrl, $param);
-        Log::debug('$responseOfCreatedの値:'.$responseOfCreated->body());
+
         // コンテナ作成が成功したか確認
         if ($responseOfCreated->failed()) {
             return response()->json(['error' => 'Failed to create container'], 500);
@@ -98,20 +98,21 @@ class Broadcast extends Model
         // コンテナIDを取得
         $containerId = $responseOfCreated->json('Id');
         $startURL = "http://host.docker.internal:2375/containers/{$containerId}/start";
-    
+
         // コンテナ起動リクエスト
         $responseOfStarted = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($startURL);
-        Log::debug('$responseOfStartedの値'.$responseOfStarted);
         // コンテナ起動が成功したか確認
         if ($responseOfStarted->failed()) {
             return response()->json(['error' => 'Failed to start container'], 500);
         }
-    
+
         return response()->json(['containerId' => $containerId]);
     }
 
+    public function watchFileTree() {
 
+    }
     public function executeCommand($command)
     {
         

@@ -31,6 +31,7 @@ const TerminalComponent = () => {
         onChange={(e) => setCommand(e.target.value)}
         onKeyPress={handleKeyPress}
         placeholder="Enter command"
+        style={{ width: '95%' }}
       />
       <button onClick={executeCommand}>実行</button>
     </div>

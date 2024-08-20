@@ -60,7 +60,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   };
 
   const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'New File', content: '' };
+    const newFile = { id: Date.now(), name: 'NewFile', content: '' };
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFile]
@@ -69,7 +69,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   };
 
   const addFolder = (parentNode) => {
-    const newFolder = { id: Date.now(), name: 'New Folder', children: [] };
+    const newFolder = { id: Date.now(), name: 'NewFolder', children: [] };
     const newChildren = [...parentNode.children, newFolder];
     parentNode.children = newChildren;
     setTreeData({ ...treeData });

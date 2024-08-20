@@ -8,6 +8,7 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
     const [fileNames, setFileNames] = useState([]);
     const [fileContents, setFileContents] = useState({});
     const [selectedFileName, setSelectedFileName] = useState('');
+    const [fileIds, setFileIds] = useState({});
 
     useEffect(() => {
         if (selectedFiles.length === 0) return;
@@ -16,12 +17,15 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
         setFileNames(newFileNames);
 
         const newFileContents = {};
+        const newFileIds = {};
         selectedFiles.forEach(file => {
             if (!fileContents[file.name]) {
                 newFileContents[file.name] = file.content || '';
             }
+            newFileIds[file.name] = file.id;
         });
         setFileContents(prevContents => ({ ...prevContents, ...newFileContents }));
+        setFileIds(prevIds => ({ ...prevIds, ...newFileIds }));
     }, [selectedFiles]);
 
     const handleOnChange = (newValue, fileName) => {
@@ -30,14 +34,16 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
                 ...prevContents,
                 [fileName]: newValue,
             };
-            updateFileContents(fileName, newValue); // Update the parent component
+            const fileId = fileIds[fileName];
+            updateFileContents(fileId, fileName, newValue); // Update the parent component with file ID
             return updatedContents;
         });
     };
 
     useEffect(() => {
         if (selectedFileName) {
-            updateFileContents(selectedFileName, fileContents[selectedFileName]);
+            const fileId = fileIds[selectedFileName];
+            updateFileContents(fileId, selectedFileName, fileContents[selectedFileName]);
         }
     }, [fileContents, selectedFileName]);
 
