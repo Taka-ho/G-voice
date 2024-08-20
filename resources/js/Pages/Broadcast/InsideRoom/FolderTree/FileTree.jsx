@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
 
@@ -11,7 +12,7 @@ const fileIcons = {
   css: '/icons/css-icon.png',
 };
 
-const FileTree = ({ fileNames, fileContents, setFileNames, updateFileContents }) => {
+const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData ? JSON.parse(storedTreeData) : {
@@ -19,12 +20,7 @@ const FileTree = ({ fileNames, fileContents, setFileNames, updateFileContents })
       name: 'root',
       children: [
         {
-          id: 2,
-          name: 'Folder 1',
-          children: [
-            { id: 3, name: 'File 1.js', content: [] },
-            { id: 4, name: 'File 2.tsx', content: [] },
-          ],
+          
         }
       ]
     };
@@ -33,6 +29,33 @@ const FileTree = ({ fileNames, fileContents, setFileNames, updateFileContents })
   useEffect(() => {
     localStorage.setItem('treeData', JSON.stringify(treeData));
   }, [treeData]);
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:8080');
+    ws.onopen = () => {
+      const url = new URL(window.location.href);
+      const containerId = url.searchParams.get('containerId');
+      console.log('Container ID:', containerId);
+
+      const message = JSON.stringify({ treeData, containerId, fileAndContents: fileAndContents });
+      ws.send(message);
+    };
+
+    ws.onmessage = (event) => {
+      const fileEvent = JSON.parse(event.data);
+      console.log('File event received:', fileEvent);
+
+      if (fileEvent.type === 'rename' || fileEvent.type === 'change') {
+        if (!fileEvent.isDirectory && fileEvent.type === 'rename') {
+          setTreeData((prevTreeData) => deleteNodeByName(prevTreeData, fileEvent.filename));
+        }
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [treeData, fileAndContents]);
 
   const deleteNodeById = (node, id) => {
     if (node.id === id) {
@@ -58,7 +81,7 @@ const FileTree = ({ fileNames, fileContents, setFileNames, updateFileContents })
       const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
       if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        updateFileContents(openedFile.name, fileContents[openedFile.name] || '');
+        updateFileContents(openedFile.name, fileAndContents[openedFile.name] || '');
       }
     }
   };

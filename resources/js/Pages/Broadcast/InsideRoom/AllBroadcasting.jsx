@@ -6,8 +6,7 @@ import Pusher from 'pusher-js';
 
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
-  const [fileNames, setFileNames] = useState([]);
-  const [fileContents, setFileContents] = useState({}); // ファイル内容を格納するオブジェクト
+  const [fileAndContents, setFileAndContents] = useState({}); // ファイル内容を格納するオブジェクト
 
   useEffect(() => {
     fetch('/api/comments')
@@ -55,12 +54,13 @@ const ParentComponent = () => {
   };
 
   // ファイルコンテンツを更新する関数
-  const updateFileContents = (fileName, newContent) => {
-    // This should update the contents for the specific file in `FileTree`
-    // Ensure the updated state is correctly handled
-    setFileContents(prevContents => ({
+  const updateFileContents = (fileId, fileName, newContent) => {
+    setFileAndContents(prevContents => ({
       ...prevContents,
-      [fileName]: newContent
+      [fileId]: {
+        name: fileName,
+        content: newContent
+      }
     }));
   };
 
@@ -72,10 +72,8 @@ const ParentComponent = () => {
             <BroadcastRoom 
               comments={comments} 
               addComment={addComment} 
-              fileNames={fileNames}
-              fileContents={fileContents}
-              setFileNames={setFileNames}
-              updateFileContents={updateFileContents} 
+              updateFileContents={updateFileContents}
+              fileAndContents={fileAndContents}
             />} 
           />
           <Route path="/broadcast/stream/:id" element={

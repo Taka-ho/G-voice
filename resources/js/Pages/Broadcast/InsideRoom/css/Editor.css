@@ -1,6 +1,7 @@
 .all-space {
   display: flex;
   flex-direction: column;
+  
 }
 
 .editor-space {
@@ -9,10 +10,20 @@
   overflow: auto;
 }
 
+.editor-terminal-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  height: 100%; /* 高さを全体に設定 */
+}
+
 .comment-section {
   width: 300px;
   display: flex;
   flex-direction: column;
+  margin-left: 2.5%;
+  margin-right: 1.5%;
 }
 
 .comment-section > * {
