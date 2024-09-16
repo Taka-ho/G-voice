@@ -1,98 +1,22 @@
-.all-space {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.editor-space {
-  flex: 1;
-  overflow: auto;
-}
-
-.comment-section {
-  width: 300px; /* Adjust width as needed */
-  display: flex;
-  flex-direction: column;
-}
-
-.comment-section > * {
-  margin-bottom: 10px; /* Add spacing between CommentList and CommentForm */
-}
-
-.app-container {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  background-color: white;
-  color: black;
-  overflow: hidden; /* Prevent overflow */
-}
-
-.command-field {
-  resize: none;
-  width: 70%;
-}
-
 .terminal-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* Align terminal to the bottom */
-  background-color: white;
-  color: black;
-  font-family: monospace;
-  font-size: 14px;
-  overflow: auto;
-  height: 50px; /* Adjust to match the height of CommentForm */
-}
-
-.terminal-container .xterm-viewport {
-  background-color: white;
-  color: black;
-}
-
-.terminal-container .xterm-cursor {
-  background-color: white;
+  background-color: black;
   color: white;
-}
-
-.terminal-container .xterm-rows {
   padding: 10px;
+  font-family: monospace;
+  height: 10vh; /* 高さを固定 */
+  overflow-y: auto; /* スクロール可能にする */
+  white-space: pre-wrap;
+  margin-right: 1%;
 }
 
-.command-field {
-  position: absolute;
-  width: 100%;
-  resize: none;
-}
-
-.terminal-menu {
-  background-color: white;
-  color: #fff;
-  
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.terminal-menu input {
-  background-color: #000;
-  color: #fff;
-  border: none;
-  padding: 10px;
-  font-size: 16px;
-  width: 100%;
-}
-
-.terminal-menu button {
-  background-color: #007acc;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
+.terminal-output {
   margin-bottom: 10px;
 }
 
-.terminal-menu pre {
+.terminal-input {
   background-color: black;
-  overflow-x: auto;
-  font-family: monospace;
+  color: white;
+  border: none;
+  outline: none;
+  width: 100%;
 }

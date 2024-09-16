@@ -26,7 +26,8 @@ services:
         depends_on:
             - mysql
             - redis
-            - websocket-app
+            - command-websocket
+            - file-websocket
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -57,11 +58,23 @@ services:
             - '6379:6379'
         networks:
             - sail
-    websocket-app:
-        image: websocket-app:latest
+    file-websocket:
+        image: file-websocket:latest
         ports:
             - '3000:3000'
             - '8080:8080'
+        volumes:
+            - './path/to/your/websocket-app:/path/inside/container'
+            - /var/run/docker.sock:/var/run/docker.sock
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        networks:
+            - websocket_network
+    command-websocket:
+        image: command-websocket:latest
+        ports:
+            - '3030:3030'
+            - '7070:7070'
         volumes:
             - './path/to/your/websocket-app:/path/inside/container'
             - /var/run/docker.sock:/var/run/docker.sock
