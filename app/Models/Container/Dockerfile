@@ -1,7 +1,12 @@
 FROM ubuntu:latest
 
 # 必要なツールをインストール
-RUN apt-get update && apt-get install -y openssh-server inotify-tools curl netcat
+RUN apt-get update && \
+    apt-get install -y openssh-server inotify-tools curl netcat-openbsd locales
+
+# ロケールを設定
+RUN locale-gen ja_JP.UTF-8 && \
+    update-locale LANG=ja_JP.UTF-8
 
 # SSHサーバーの設定
 RUN mkdir /var/run/sshd

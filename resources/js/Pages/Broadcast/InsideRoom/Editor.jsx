@@ -52,7 +52,7 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
     };
 
     return (
-        <div className="editor-container" style={{ flex: 1 }}>
+        <div className="editor-container">
             <Tabs onSelect={handleTabSelect}>
                 <TabList>
                     {fileNames.map((fileName, index) => (

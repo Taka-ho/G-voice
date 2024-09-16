@@ -12,7 +12,7 @@ use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
-class BroadcastController extends Controller
+class BroadCastController extends Controller
 {
     //配信ルームについてのController
     public function index()
