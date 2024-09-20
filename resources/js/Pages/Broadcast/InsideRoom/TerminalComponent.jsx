@@ -11,7 +11,6 @@ const TerminalComponent = () => {
     const socket = new WebSocket('ws://localhost:7070');
 
     socket.onopen = () => {
-      console.log('WebSocket connection established');
       setWs(socket);
     };
 
@@ -24,7 +23,6 @@ const TerminalComponent = () => {
     };
 
     socket.onclose = () => {
-      console.log('WebSocket connection closed');
     };
 
     socket.onerror = (error) => {

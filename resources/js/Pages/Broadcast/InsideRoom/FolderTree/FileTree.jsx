@@ -27,15 +27,10 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   });
 
   useEffect(() => {
-    localStorage.setItem('treeData', JSON.stringify(treeData));
-  }, [treeData]);
-
-  useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080');
     ws.onopen = () => {
       const url = new URL(window.location.href);
       const containerId = url.searchParams.get('containerId');
-      console.log('Container ID:', containerId);
 
       const message = JSON.stringify({ treeData, containerId, fileAndContents: fileAndContents });
       ws.send(message);
@@ -43,7 +38,6 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
 
     ws.onmessage = (event) => {
       const fileEvent = JSON.parse(event.data);
-      console.log('File event received:', fileEvent);
 
       if (fileEvent.type === 'rename' || fileEvent.type === 'change') {
         if (!fileEvent.isDirectory && fileEvent.type === 'rename') {
@@ -92,17 +86,25 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   };
 
   const handleFileRenamed = (updatedNode) => {
+    const updateNode = (node, updatedNode) => {
+      if (node.id === updatedNode.id) {
+        return { ...node, name: updatedNode.name };
+      }
+  
+      if (node.children && node.children.length > 0) {
+        const updatedChildren = node.children.map((child) => updateNode(child, updatedNode));
+        return { ...node, children: updatedChildren };
+      }
+      return node;
+    };
+  
     setTreeData((prevTreeData) => {
-      if (!prevTreeData.children) return prevTreeData;
-
-      const updatedChildren = prevTreeData.children.map((child) => {
-        if (child.id === updatedNode.id) {
-          return updatedNode;
-        }
-        return child;
-      });
-      return { ...prevTreeData, children: updatedChildren };
+      const updatedTree = updateNode(prevTreeData, updatedNode);
+      localStorage.setItem('treeData', JSON.stringify(updatedTree));
+      return updatedTree;
     });
+    const storageEvent = new Event('storage');
+    window.dispatchEvent(storageEvent);
   };
 
   const renderTree = (node) => {

@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import AudioStreamer from './Audio/AudioStreamer';
 import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
-import TerminalComponent from './TerminalComponent'; // インポートを修正
+import TerminalComponent from './TerminalComponent'; // Corrected import
 import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
@@ -47,7 +47,7 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
   };
 
   const handleEndBroadcast = () => {
-    if (window.confirm('本当に配信を終了しますか？')) {
+    if (window.confirm('Are you sure you want to end the broadcast?')) {
       fetch('/api/broadcast/down', {
         method: 'POST',
         headers: {
@@ -65,23 +65,23 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
 
   return (
     <div className='all-space'>
-      <Head title="配信ルーム!!" />
-      <button onClick={handleEndBroadcast} style={{textAlign:'left'}}>配信終了</button>
+      <Head title="Broadcast Room" />
+      <button onClick={handleEndBroadcast} style={{ textAlign: 'left' }}>End Broadcast</button>
       <AudioStreamer />
       <div style={{ display: 'flex', flex: 1 }}>
-        <FileTree 
+        <FileTree
           fileNames={fileNames}
           setFileNames={setFileNames}
           fileAndContents={fileAndContents}
           updateFileContents={updateFileContents}
         />
         <div className='Editor' style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Editor 
-            selectedFiles={fileNames} 
+          <Editor
+            selectedFiles={fileNames}
             updateFileContents={updateFileContents}
-            updateSelectedFileName={setSelectedFileName} 
+            updateSelectedFileName={setSelectedFileName}
           />
-            <TerminalComponent />
+          <TerminalComponent />
         </div>
         <div className="comment-section">
           <CommentList pusherComments={pusherComments} comments={comments} />
