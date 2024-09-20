@@ -3,15 +3,6 @@ import { useLocation } from 'react-router-dom';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
 
-const fileIcons = {
-  js: '/icons/js-icon.png',
-  jsx: '/icons/react-icon.png',
-  ts: '/icons/ts-icon.png',
-  tsx: '/icons/react-icon.png',
-  html: '/icons/html-icon.png',
-  css: '/icons/css-icon.png',
-};
-
 const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
@@ -107,27 +98,6 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     window.dispatchEvent(storageEvent);
   };
 
-  const renderTree = (node) => {
-    if (!node) {
-      return null;
-    }
-    const ext = node.name.split('.').pop();
-    const icon = fileIcons[ext];
-
-    return (
-      <li key={node.id}>
-        <div onClick={() => clickedFile(node)} style={{ display: 'flex', alignItems: 'center' }}>
-          {icon && <img src={icon} alt={ext} style={{ marginRight: '8px' }} />}
-          {node.name}
-        </div>
-        {node.children && (
-          <ul>
-            {node.children.map((child) => renderTree(child))}
-          </ul>
-        )}
-      </li>
-    );
-  };
 
   return (
     <div style={{ display: 'flex-grow' }}>
