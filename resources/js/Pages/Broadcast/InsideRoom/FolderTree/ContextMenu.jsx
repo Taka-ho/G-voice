@@ -66,13 +66,15 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
       children: [...(parentNode.children || []), newFile]
     };
     setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
+    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
   };
 
   const addFolder = (parentNode) => {
     const newFolder = { id: Date.now(), name: 'NewFolder', children: [] };
     const newChildren = [...parentNode.children, newFolder];
     parentNode.children = newChildren;
-    setTreeData({ ...treeData });
+    setTreeData((prevTreeData) => ({ ...prevTreeData }));
+    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
   };
 
   const renameItem = (node) => {
@@ -81,6 +83,12 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
       node.name = newName;
       onFileRenamed(node);
     }
+    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
+  };
+
+  const handleDelete = (node) => {
+    onDelete(node);
+    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
   };
 
   const isFolder = data.children && Array.isArray(data.children);
@@ -95,6 +103,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
         border: '1px solid #ccc',
         backgroundColor: '#fff',
         padding: '4px',
+        zIndex: 1000,
       }}
     >
       {isFolder ? (
@@ -108,7 +117,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
           <div className='contextMenu' onClick={() => addFolder(data)}>
             フォルダの追加
           </div>
-          <div className='contextMenu' onClick={() => onDelete(data)}>
+          <div className='contextMenu' onClick={() => handleDelete(data)}>
             削除する
           </div>
         </div>
@@ -117,7 +126,7 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
           <div className='contextMenu' onClick={() => renameItem(data)}>
             名前の変更
           </div>
-          <div className='contextMenu' onClick={() => onDelete(data)}>
+          <div className='contextMenu' onClick={() => handleDelete(data)}>
             削除する
           </div>
         </div>
