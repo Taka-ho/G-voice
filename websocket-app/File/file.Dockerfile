@@ -10,6 +10,7 @@ COPY ./package*.json ./
 # Install the dependencies
 RUN npm install
 RUN npm install axios
+RUN npm install chokidar
 # Copy all files from the websocket-app directory to the working directory inside the container
 COPY . .
 

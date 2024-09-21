@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
 
 const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
-    return storedTreeData ? JSON.parse(storedTreeData) : {
-      id: 1,
-      name: 'root',
-      children: [
-        {
-          
-        }
-      ]
-    };
+    return storedTreeData
+      ? JSON.parse(storedTreeData)
+      : {
+          id: 1,
+          name: 'root',
+          children: [],
+        };
   });
 
   useEffect(() => {
@@ -22,18 +19,19 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     ws.onopen = () => {
       const url = new URL(window.location.href);
       const containerId = url.searchParams.get('containerId');
-
-      const message = JSON.stringify({ treeData, containerId, fileAndContents: fileAndContents });
+      const message = JSON.stringify({ treeData, containerId, fileAndContents });
       ws.send(message);
     };
 
     ws.onmessage = (event) => {
       const fileEvent = JSON.parse(event.data);
 
-      if (fileEvent.type === 'rename' || fileEvent.type === 'change') {
-        if (!fileEvent.isDirectory && fileEvent.type === 'rename') {
-          setTreeData((prevTreeData) => deleteNodeByName(prevTreeData, fileEvent.filename));
-        }
+      if (fileEvent.type === 'add') {
+        // Add file to the file tree
+      } else if (fileEvent.type === 'change') {
+        // Update file content
+      } else if (fileEvent.type === 'remove') {
+        setTreeData((prevTreeData) => deleteNodeById(prevTreeData, fileEvent.fileName));
       }
     };
 
@@ -64,7 +62,7 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   const clickedFile = (clickedFile) => {
     if (!clickedFile.children) {
       const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
-      if (!fileNames.some(file => file.id === openedFile.id || file.name === openedFile.name)) {
+      if (!fileNames.some((file) => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
         updateFileContents(openedFile.name, fileAndContents[openedFile.name] || '');
       }
@@ -73,7 +71,15 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
 
   const handleFileDeleted = (nodeId) => {
     const updatedTreeData = deleteNodeById(treeData, nodeId);
-    setTreeData(updatedTreeData);
+    if (updatedTreeData) {
+      setTreeData(updatedTreeData);
+      // Save updated treeData to localStorage
+      localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
+
+      // Trigger storage event to notify other components
+      const storageEvent = new Event('storage');
+      window.dispatchEvent(storageEvent);
+    }
   };
 
   const handleFileRenamed = (updatedNode) => {
@@ -81,23 +87,25 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
       if (node.id === updatedNode.id) {
         return { ...node, name: updatedNode.name };
       }
-  
+
       if (node.children && node.children.length > 0) {
         const updatedChildren = node.children.map((child) => updateNode(child, updatedNode));
         return { ...node, children: updatedChildren };
       }
       return node;
     };
-  
+
     setTreeData((prevTreeData) => {
       const updatedTree = updateNode(prevTreeData, updatedNode);
       localStorage.setItem('treeData', JSON.stringify(updatedTree));
+
+      // Trigger storage event to notify other components
+      const storageEvent = new Event('storage');
+      window.dispatchEvent(storageEvent);
+
       return updatedTree;
     });
-    const storageEvent = new Event('storage');
-    window.dispatchEvent(storageEvent);
   };
-
 
   return (
     <div style={{ display: 'flex-grow' }}>

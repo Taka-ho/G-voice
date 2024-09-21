@@ -36,7 +36,24 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
         [fileName]: newValue,
       };
       const fileId = fileIds[fileName];
+      
+      // Save updated contents in localStorage
+      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
+      if (treeData && treeData.children) {
+        const fileToUpdate = treeData.children.find((file) => file.id === fileId);
+        if (fileToUpdate) {
+          fileToUpdate.content = newValue;
+          localStorage.setItem('treeData', JSON.stringify(treeData));
+        }
+      }
+
+      // Trigger a storage event to notify other components
+      const storageEvent = new Event('storage');
+      window.dispatchEvent(storageEvent);
+
+      // Update file contents in parent component
       updateFileContents(fileId, fileName, newValue);
+
       return updatedContents;
     });
   };
@@ -64,13 +81,6 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [selectedFiles]);
-
-  useEffect(() => {
-    if (selectedFileName) {
-      const fileId = fileIds[selectedFileName];
-      updateFileContents(fileId, selectedFileName, fileContents[selectedFileName]);
-    }
-  }, [fileContents, selectedFileName]);
 
   // Handle tab select
   const handleTabSelect = (selectedIndex) => {
