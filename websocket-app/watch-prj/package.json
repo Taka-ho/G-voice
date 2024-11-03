@@ -1,10 +1,10 @@
 {
-    "name": "file-websocket",
+    "name": "watch-prj",
     "version": "0.0.0",
     "private": true,
     "type": "module",
     "scripts": {
-        "start": "node file-server.js"
+        "start": "node watch-prj.js"
     },
     "dependencies": {
         "cookie-parser": "~1.4.4",

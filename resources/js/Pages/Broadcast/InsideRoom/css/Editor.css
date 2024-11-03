@@ -8,6 +8,7 @@
   overflow: auto;
 }
 .editor-container {
+  margin-top: 1%;
   flex: 1 1 0%;
 }
 .comment-section {

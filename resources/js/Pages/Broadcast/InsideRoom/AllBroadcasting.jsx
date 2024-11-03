@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import BroadcastRoom from './BroadcastRoom';
-import ViewerDashboard from './ViewerDashboard';
+import ViewerDashboard from './Audience/ViewerDashboard';
 import Pusher from 'pusher-js';
 
 const ParentComponent = () => {

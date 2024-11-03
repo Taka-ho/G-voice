@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AudioStreamer from './Audio/AudioStreamer';
+import AudioStreamer from './Header/AudioStreamer';
 import FileTree from './FolderTree/FileTree';
 import Editor from './Editor';
-import TerminalComponent from './TerminalComponent'; // Corrected import
+import TerminalComponent from './TerminalComponent';
 import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
+import Header from './Header/Header';  // 新しいHeaderコンポーネントをインポート
 import './css/Editor.css';
 
 const usePusherComments = () => {
@@ -38,13 +39,16 @@ const usePusherComments = () => {
 
 const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndContents }) => {
   const [fileNames, setFileNames] = useState([]);
-  const [fileContents, setFileContents] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
 
-  const updateSelectedFileName = (newFileName) => {
-    setSelectedFileName(newFileName);
-  };
+  const [isMicOn, setMicOn] = useState(false);
+  const [isBroadcasting, setBroadcasting] = useState(false);
+  const [isSharing, setSharing] = useState(false);
+
+  const toggleMic = () => setMicOn(!isMicOn);
+  const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
+  const toggleShare = () => setSharing(!isSharing);
 
   const handleEndBroadcast = () => {
     if (window.confirm('Are you sure you want to end the broadcast?')) {
@@ -65,9 +69,16 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
 
   return (
     <div className='all-space'>
-      <Head title="Broadcast Room" />
-      <button onClick={handleEndBroadcast} style={{ textAlign: 'left' }}>End Broadcast</button>
-      <AudioStreamer />
+      <Head title="配信部屋〜" />
+      <Header 
+        isMicOn={isMicOn} 
+        toggleMic={toggleMic} 
+        isBroadcasting={isBroadcasting} 
+        toggleBroadcast={toggleBroadcast} 
+        isSharing={isSharing} 
+        toggleShare={toggleShare} 
+      />
+
       <div style={{ display: 'flex', flex: 1 }}>
         <FileTree
           fileNames={fileNames}
