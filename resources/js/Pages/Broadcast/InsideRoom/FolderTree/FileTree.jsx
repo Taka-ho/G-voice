@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
+import axios from 'axios';
 
 const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
@@ -10,16 +11,21 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
       : {
           id: 1,
           name: 'root',
+          path: 'root',
           children: [],
         };
   });
 
+  const [pathBeforeChange, setPathBeforeChange] = useState('');
+  const [pathAfterChange, setPathAfterChange] = useState('');
+  console.log("pathBeforeChange: " + pathBeforeChange);
+  console.log("pathAfterChange: " + pathAfterChange);
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080');
     ws.onopen = () => {
       const url = new URL(window.location.href);
       const containerId = url.searchParams.get('containerId');
-      const message = JSON.stringify({ treeData, containerId, fileAndContents });
+      const message = JSON.stringify({ treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange});
       ws.send(message);
     };
 
@@ -73,19 +79,18 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     const updatedTreeData = deleteNodeById(treeData, nodeId);
     if (updatedTreeData) {
       setTreeData(updatedTreeData);
-      // Save updated treeData to localStorage
       localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
-
-      // Trigger storage event to notify other components
-      const storageEvent = new Event('storage');
-      window.dispatchEvent(storageEvent);
     }
   };
 
   const handleFileRenamed = (updatedNode) => {
     const updateNode = (node, updatedNode) => {
       if (node.id === updatedNode.id) {
-        return { ...node, name: updatedNode.name };
+        return {
+          ...node,
+          name: updatedNode.name,
+          path: updatedNode.path,
+        };
       }
 
       if (node.children && node.children.length > 0) {
@@ -98,11 +103,6 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     setTreeData((prevTreeData) => {
       const updatedTree = updateNode(prevTreeData, updatedNode);
       localStorage.setItem('treeData', JSON.stringify(updatedTree));
-
-      // Trigger storage event to notify other components
-      const storageEvent = new Event('storage');
-      window.dispatchEvent(storageEvent);
-
       return updatedTree;
     });
   };
@@ -119,6 +119,10 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
             onFileDeleted={handleFileDeleted}
             onFileRenamed={handleFileRenamed}
             setTreeData={setTreeData}
+            pathBeforeChange={pathBeforeChange}
+            pathAfterChange={pathAfterChange}
+            setPathBeforeChange={setPathBeforeChange}
+            setPathAfterChange={setPathAfterChange}
           />
         </ul>
       </div>

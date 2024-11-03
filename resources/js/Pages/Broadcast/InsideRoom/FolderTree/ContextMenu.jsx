@@ -1,37 +1,41 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import 'devicon/devicon.min.css';
 import FileIcon from './FileIcon';
 
-const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeData }) => {
+const ContextMenu = ({
+  data,
+  indent,
+  onDelete,
+  onClick,
+  onFileRenamed,
+  setTreeData,
+  pathBeforeChange,
+  pathAfterChange,
+  setPathBeforeChange,
+  setPathAfterChange,
+}) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
-  const [isContextMenuFocused, setContextMenuFocused] = useState(false);
   const popupRef = useRef(null);
+  const [rootDirName, setRootDirName] = useState('');
+
+  useEffect(() => {
+    // localStorageからtreeDataを取得
+    const storedTreeData = localStorage.getItem('treeData');
+    if (storedTreeData) {
+      const treeData = JSON.parse(storedTreeData);
+      // 最上位の親要素のフォルダー名を取得
+      setRootDirName(treeData.name);
+    }
+  }, []);
 
   const clickedFile = () => {
     onClick(data);
-  };
-
-  const getParentName = (currentNode, targetId, parentName = null) => {
-    if (currentNode.id === targetId) {
-      return parentName;
-    }
-
-    if (currentNode.children) {
-      for (const childNode of currentNode.children) {
-        const result = getParentName(childNode, targetId, currentNode.name);
-        if (result !== null) {
-          return result;
-        }
-      }
-    }
-    return null;
   };
 
   const handleContextMenu = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
-    setContextMenuFocused(true);
     closeContextMenu();
   };
 
@@ -42,7 +46,6 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   const documentClickHandler = (e) => {
     if (popupRef.current && popupRef.current.contains(e.target)) return;
     setContextMenu({ visible: false, x: 0, y: 0 });
-    setContextMenuFocused(false);
     document.body.removeEventListener('click', documentClickHandler);
   };
 
@@ -60,39 +63,52 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
   };
 
   const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'NewFile', content: '' };
+    const newFile = { id: Date.now(), name: 'NewFile', content: '', path: `${parentNode.path}/NewFile` };
     const updatedNode = {
       ...parentNode,
-      children: [...(parentNode.children || []), newFile]
+      children: [...(parentNode.children || []), newFile],
     };
     setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
-    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
+    setContextMenu({ visible: false, x: 0, y: 0 });
   };
 
   const addFolder = (parentNode) => {
-    const newFolder = { id: Date.now(), name: 'NewFolder', children: [] };
-    const newChildren = [...parentNode.children, newFolder];
-    parentNode.children = newChildren;
-    setTreeData((prevTreeData) => ({ ...prevTreeData }));
-    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
+    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: `${parentNode.path}/NewFolder` };
+    const updatedNode = {
+      ...parentNode,
+      children: [...(parentNode.children || []), newFolder],
+    };
+    setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
+    setContextMenu({ visible: false, x: 0, y: 0 });
   };
 
   const renameItem = (node) => {
+    // 変更前のパスを保存
+    setPathBeforeChange(node.path);
+
     const newName = prompt('Enter new name:', node.name);
     if (newName !== null) {
-      node.name = newName;
-      onFileRenamed(node);
+      const updatedNode = {
+        ...node,
+        name: newName,
+        path: node.path.replace(/\/[^/]+$/, `/${newName}`), // 新しいパスを計算
+      };
+
+      // 変更後のパスを保存
+      setPathAfterChange(updatedNode.path);
+
+      setTreeData((prevTreeData) => updateNodeById(prevTreeData, node.id, updatedNode));
+      onFileRenamed(updatedNode);
     }
-    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
+    setContextMenu({ visible: false, x: 0, y: 0 });
   };
 
   const handleDelete = (node) => {
     onDelete(node);
-    setContextMenu({ visible: false, x: 0, y: 0 }); // メニューを閉じる
+    setContextMenu({ visible: false, x: 0, y: 0 });
   };
 
   const isFolder = data.children && Array.isArray(data.children);
-
   const contextMenuContent = contextMenu.visible && (
     <div
       ref={popupRef}
@@ -151,6 +167,10 @@ const ContextMenu = ({ data, indent, onDelete, onClick, onFileRenamed, setTreeDa
               onClick={onClick}
               onFileRenamed={onFileRenamed}
               setTreeData={setTreeData}
+              pathBeforeChange={pathBeforeChange}
+              pathAfterChange={pathAfterChange}
+              setPathBeforeChange={setPathBeforeChange}
+              setPathAfterChange={setPathAfterChange}
             />
           ))}
         </ul>

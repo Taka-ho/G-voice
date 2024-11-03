@@ -27,7 +27,8 @@ services:
             - mysql
             - redis
             - command-websocket
-            - file-websocket
+            - watch-prj
+            - file-in-container
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -58,11 +59,22 @@ services:
             - '6379:6379'
         networks:
             - sail
-    file-websocket:
-        image: file-websocket:latest
+    watch-prj:
+        image: watch-prj:latest
         ports:
             - '3000:3000'
             - '8080:8080'
+        volumes:
+            - './path/to/your/websocket-app:/path/inside/container'
+            - /var/run/docker.sock:/var/run/docker.sock
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        networks:
+            - websocket_network
+    file-in-container:
+        image: file-in-container:latest
+        ports:
+            - '9090:9090'
         volumes:
             - './path/to/your/websocket-app:/path/inside/container'
             - /var/run/docker.sock:/var/run/docker.sock
