@@ -63,7 +63,13 @@ const ContextMenu = ({
   };
 
   const addFile = (parentNode) => {
-    const newFile = { id: Date.now(), name: 'NewFile', content: '', path: `${parentNode.path}/NewFile` };
+    let path;
+    if (parentNode.path == undefined){
+      path = `${rootDirName}/NewFile.txt`
+    } else {
+      path = `${rootDirName}/${parentNode.path}/NewFile.txt`
+    }
+    const newFile = { id: Date.now(), name: 'NewFile.txt', content: '', path: path};
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFile],
@@ -73,7 +79,7 @@ const ContextMenu = ({
   };
 
   const addFolder = (parentNode) => {
-    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: `${parentNode.path}/NewFolder` };
+    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: `${rootDirName}/${parentNode.path}/NewFolder` };
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFolder],

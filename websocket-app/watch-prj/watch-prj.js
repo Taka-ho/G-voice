@@ -1,6 +1,8 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import axios from 'axios';
+import { spawn } from 'child_process';
+import path from 'path';
 
 const app = express();
 const port = 3000;
@@ -13,7 +15,7 @@ const wss = new WebSocketServer({ port: 8080 });
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
-    const { treeData, containerId, fileAndContents } = parsedMessage;
+    const { treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange } = parsedMessage;
 
     const sanitizeName = (name) => name.replace(/\s+/g, '');
 
@@ -28,9 +30,54 @@ wss.on('connection', (ws) => {
       }
     };
 
-    try {
+    // execCommand関数の定義
+    const execCommand = async (containerId, cmd) => {
       const baseURL = 'http://host.docker.internal:2375';
+      const execCreateResponse = await axios.post(`${baseURL}/containers/${containerId}/exec`, {
+        AttachStdout: true,
+        AttachStderr: true,
+        Cmd: cmd
+      });
+
+      const execId = execCreateResponse.data.Id;
+
+      const execStartResponse = await axios.post(`${baseURL}/exec/${execId}/start`, {
+        Detach: false,
+        Tty: false
+      }, {
+        responseType: 'stream'
+      });
+
+      let output = '';
+      execStartResponse.data.on('data', (data) => {
+        output += data.toString();
+      });
+
+      return new Promise((resolve, reject) => {
+        execStartResponse.data.on('end', () => {
+          resolve(output);
+        });
+
+        execStartResponse.data.on('error', (error) => {
+          console.error(`Command error: ${error.message}`);
+          reject(error);
+        });
+      });
+    };
+
+    // moveFile関数の定義
+    const moveFile = async (containerId, oldPath, newPath) => {
+      const command = ['mv', oldPath, newPath]; // mvコマンドと引数
+      return execCommand(containerId, command);
+    };
+
+    try {
       applyContentsToTree(treeData);
+
+      // pathBeforeChangeとpathAfterChangeが異なる場合
+      if (parsedMessage.pathBeforeChange !== parsedMessage.pathAfterChange) {
+        await moveFile(containerId, parsedMessage.pathBeforeChange, parsedMessage.pathAfterChange);
+      }
 
       const createOrUpdateStructure = async (node, path = '/root') => {
         const sanitizedFileName = sanitizeName(node.name);
@@ -71,39 +118,6 @@ wss.on('connection', (ws) => {
 
           await execCommand(containerId, ['sh', '-c', `echo "${content.replace(/"/g, '\\"')}" > ${finalPath}`]);
         }
-      };
-
-      const execCommand = async (containerId, cmd) => {
-        const execCreateResponse = await axios.post(`${baseURL}/containers/${containerId}/exec`, {
-          AttachStdout: true,
-          AttachStderr: true,
-          Cmd: cmd
-        });
-
-        const execId = execCreateResponse.data.Id;
-
-        const execStartResponse = await axios.post(`${baseURL}/exec/${execId}/start`, {
-          Detach: false,
-          Tty: false
-        }, {
-          responseType: 'stream'
-        });
-
-        let output = '';
-        execStartResponse.data.on('data', (data) => {
-          output += data.toString();
-        });
-
-        return new Promise((resolve, reject) => {
-          execStartResponse.data.on('end', () => {
-            resolve(output);
-          });
-
-          execStartResponse.data.on('error', (error) => {
-            console.error(`Command error: ${error.message}`);
-            reject(error);
-          });
-        });
       };
 
       await createOrUpdateStructure(treeData);
