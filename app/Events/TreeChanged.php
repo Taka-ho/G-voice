@@ -1,27 +1,34 @@
 <?php
 
 namespace App\Events;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class FileChanged implements ShouldBroadcast
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class TreeChanged implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $filePath;
-    public $eventType;
+    public $treeData;
+    public $containerId;
+    public $fileAndContents;
+    public $pathBeforeChange;
+    public $pathAfterChange;
 
-    public function __construct($filePath, $eventType)
+    public function __construct($treeData, $containerId, $fileAndContents, $pathBeforeChange, $pathAfterChange)
     {
-        $this->filePath = $filePath;
-        $this->eventType = $eventType;
+        $this->treeData = $treeData;
+        $this->containerId = $containerId;
+        $this->fileAndContents = $fileAndContents;
+        $this->pathBeforeChange = $pathBeforeChange;
+        $this->pathAfterChange = $pathAfterChange;
     }
 
     public function broadcastOn()
     {
-        return new PrivateChannel('tree-changes');
+        return new Channel('file-tree-channel.' . $this->containerId);
     }
 }

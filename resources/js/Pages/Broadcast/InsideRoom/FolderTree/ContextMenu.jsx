@@ -13,6 +13,7 @@ const ContextMenu = ({
   pathAfterChange,
   setPathBeforeChange,
   setPathAfterChange,
+  setPathOfDeleteFile,
 }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const popupRef = useRef(null);
@@ -63,31 +64,37 @@ const ContextMenu = ({
   };
 
   const addFile = (parentNode) => {
-    let path;
-    if (parentNode.path == undefined){
-      path = `${rootDirName}/NewFile.txt`
-    } else {
-      path = `${rootDirName}/${parentNode.path}/NewFile.txt`
-    }
-    const newFile = { id: Date.now(), name: 'NewFile.txt', content: '', path: path};
+    // parentNode.path の先頭が rootDirName で始まる場合、重複を避ける
+    const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
+      ? `${parentNode.path}/NewFile.txt`
+      : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFile.txt`;
+    console.log(path);
+    const newFile = { id: Date.now(), name: 'NewFile.txt', content: '', path: path };
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFile],
     };
+  
     setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
     setContextMenu({ visible: false, x: 0, y: 0 });
   };
-
+    
   const addFolder = (parentNode) => {
-    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: `${rootDirName}/${parentNode.path}/NewFolder` };
+    // parentNode.path の先頭が rootDirName で始まる場合、重複を避ける
+    const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
+      ? `${parentNode.path}/NewFolder`
+      : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFolder`;
+    console.log(path);
+    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: path };
     const updatedNode = {
       ...parentNode,
       children: [...(parentNode.children || []), newFolder],
     };
+  
     setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
     setContextMenu({ visible: false, x: 0, y: 0 });
   };
-
+    
   const renameItem = (node) => {
     // 変更前のパスを保存
     setPathBeforeChange(node.path);
@@ -110,7 +117,9 @@ const ContextMenu = ({
   };
 
   const handleDelete = (node) => {
-    onDelete(node);
+    const pathOfDeleteTarget = node.path;
+    setPathOfDeleteFile(pathOfDeleteTarget); // pathを保存
+    onDelete(node); // 削除処理を呼び出す
     setContextMenu({ visible: false, x: 0, y: 0 });
   };
 
@@ -128,6 +137,7 @@ const ContextMenu = ({
         zIndex: 1000,
       }}
     >
+
       {isFolder ? (
         <div className='folder-context-menu'>
           <div className='contextMenu' onClick={() => renameItem(data)}>
@@ -177,6 +187,7 @@ const ContextMenu = ({
               pathAfterChange={pathAfterChange}
               setPathBeforeChange={setPathBeforeChange}
               setPathAfterChange={setPathAfterChange}
+              setPathOfDeleteFile={setPathOfDeleteFile}
             />
           ))}
         </ul>

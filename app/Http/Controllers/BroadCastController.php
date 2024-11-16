@@ -85,15 +85,11 @@ class BroadCastController extends Controller
     
         if (DB::table('broadcasting_rooms')->where('user_id', $userId)->exists()) {
             $containerId = Redis::get("user_to_container", $userId);
-            return Inertia::render("Broadcast/InsideRoom/AllBroadcasting", [
-                'userId' => $userId,
-                'containerId' => $containerId,
-            ]);
+            return Inertia::render("Broadcast/InsideRoom/AllBroadcasting");
         } else {
             return redirect()->route("broadcast.index");
         }
     }
-    
 
     public function createRoom(Request $request)
     {

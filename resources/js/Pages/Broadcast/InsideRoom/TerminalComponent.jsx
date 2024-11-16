@@ -42,9 +42,6 @@ const TerminalComponent = () => {
 
   const executeCommand = (command) => {
     if (ws && command.trim()) {
-      const url = new URL(window.location.href);
-      const containerId = url.searchParams.get('containerId');
-      ws.send(JSON.stringify({ command, containerId }));
       setOutput((prevOutput) => [...prevOutput, `> ${command}`]);
     }
   };
