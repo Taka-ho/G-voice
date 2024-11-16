@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
-import axios from 'axios';
 
 const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
@@ -18,20 +17,18 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
 
   const [pathBeforeChange, setPathBeforeChange] = useState('');
   const [pathAfterChange, setPathAfterChange] = useState('');
-  console.log("pathBeforeChange: " + pathBeforeChange);
-  console.log("pathAfterChange: " + pathAfterChange);
+  const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
+
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080');
+
     ws.onopen = () => {
-      const url = new URL(window.location.href);
-      const containerId = url.searchParams.get('containerId');
-      const message = JSON.stringify({ treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange});
+      const message = JSON.stringify({ treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
       ws.send(message);
     };
 
     ws.onmessage = (event) => {
       const fileEvent = JSON.parse(event.data);
-
       if (fileEvent.type === 'add') {
         // Add file to the file tree
       } else if (fileEvent.type === 'change') {
@@ -75,12 +72,24 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     }
   };
 
-  const handleFileDeleted = (nodeId) => {
-    const updatedTreeData = deleteNodeById(treeData, nodeId);
+  const handleFileDeleted = (node) => {
+    const pathOfDeleteFile = node.path; // node.pathを取得
+    setPathOfDeleteFile(pathOfDeleteFile); // pathOfDeleteFileをセット
+    const updatedTreeData = deleteNodeById(treeData, node.id);
     if (updatedTreeData) {
       setTreeData(updatedTreeData);
       localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
     }
+
+    // WebSocketを使用して削除処理を送信
+    const ws = new WebSocket('ws://localhost:8080');
+    ws.onopen = () => {
+      const message = JSON.stringify({ action: 'delete', path: pathOfDeleteFile });
+      ws.send(message);
+    };
+
+    // pathOfDeleteFileを空に戻す
+    setPathOfDeleteFile('');
   };
 
   const handleFileRenamed = (updatedNode) => {
@@ -114,15 +123,15 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
           <ContextMenu
             data={treeData}
             indent={0}
-            onDelete={(node) => handleFileDeleted(node.id)}
+            onDelete={handleFileDeleted}
             onClick={clickedFile}
-            onFileDeleted={handleFileDeleted}
             onFileRenamed={handleFileRenamed}
             setTreeData={setTreeData}
             pathBeforeChange={pathBeforeChange}
             pathAfterChange={pathAfterChange}
             setPathBeforeChange={setPathBeforeChange}
             setPathAfterChange={setPathAfterChange}
+            setPathOfDeleteFile={setPathOfDeleteFile}
           />
         </ul>
       </div>

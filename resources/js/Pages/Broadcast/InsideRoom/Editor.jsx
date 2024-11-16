@@ -60,17 +60,14 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('Storage change detected');
       const updatedTree = JSON.parse(localStorage.getItem('treeData') || '{}');
-      console.log('Updated tree:', updatedTree);
   
       if (updatedTree && updatedTree.children) {
         const newFileNames = selectedFiles.map((file) => {
           const updatedFile = updatedTree.children.find((item) => item.id === file.id);
           return updatedFile ? updatedFile.name : file.name;
         });
-  
-        console.log('New file names:', newFileNames);
+
         setFileNames(newFileNames);
       }
     };
