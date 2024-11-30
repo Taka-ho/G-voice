@@ -23,7 +23,11 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
     const ws = new WebSocket('ws://localhost:8080');
 
     ws.onopen = () => {
-      const message = JSON.stringify({ treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
+      
+      const queryString = window.location.search;
+      const params = new URLSearchParams(queryString);
+      const containerId = params.get('containerId');
+      const message = JSON.stringify({ treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
       ws.send(message);
     };
 
