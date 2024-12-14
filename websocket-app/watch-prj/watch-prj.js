@@ -84,10 +84,6 @@ wss.on('connection', (ws) => {
             if (fileAndContents[child.id].name !== child.name) {
               await moveFile(containerId, oldChildPath, childCurrentPath);
             }
-          } else {
-            const content = child.content || '';
-            const finalPath = childSanitizedFileName.includes('.') ? childCurrentPath : `${childCurrentPath}.txt`;
-            await execCommand(containerId, ['sh', '-c', `echo "${content.replace(/"/g, '\\"')}" > ${finalPath}`]);
           }
 
           await createOrUpdateStructure(child, currentPath);
@@ -95,7 +91,7 @@ wss.on('connection', (ws) => {
       } else {
         const content = node.content || '';
         const finalPath = sanitizedFileName.includes('.') ? currentPath : `${currentPath}.txt`;
-        await execCommand(containerId, ['sh', '-c', `echo "${content.replace(/"/g, '\\"')}" > ${finalPath}`]);
+        await execCommand(containerId, ['bash', '-c', `echo "${content.replace(/"/g, '\\"')}" > ${finalPath}`]);
       }
     };
 
