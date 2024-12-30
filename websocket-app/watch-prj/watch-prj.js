@@ -9,6 +9,28 @@ app.use(express.json());
 
 const wss = new WebSocketServer({ port: 8080 });
 
+// グローバル変数で userId を保持
+let userId = null;
+
+/**
+ * Laravel APIから userId を取得
+ * @param {string} containerId - DockerコンテナID
+ * @returns {Promise<string>} - 取得したユーザーID
+ */
+const getUserId = async (containerId) => {
+  if (!userId) {
+    try {
+      const response = await axios.get(`http://sail/api/searchUserId/${containerId}`);
+      userId = response.data.userId; // Laravelの期待されるレスポンス形式: { "userId": "value" }
+      console.log(`User ID fetched: ${userId}`);
+    } catch (error) {
+      console.error(`Error fetching userId: ${error.message}`);
+      throw new Error('Unable to fetch userId from Laravel API');
+    }
+  }
+  return userId;
+};
+
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
@@ -96,6 +118,10 @@ wss.on('connection', (ws) => {
     };
 
     try {
+      // 初回のみ userId を取得
+      const fetchedUserId = await getUserId(containerId);
+      console.log(`Using User ID: ${fetchedUserId}`);
+
       applyContentsToTree(treeData);
 
       // リネーム処理

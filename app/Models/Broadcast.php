@@ -24,15 +24,15 @@ class Broadcast extends Model
 {
     use HasFactory;
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function BroadcastingRooms(): string
     {
         //配信中の部屋のリストを取得する。broadcastsテーブルのbroadcasting_flagカラムが1(配信中)のものが条件。
         return DB::table('broadcasting_rooms')->where('broadcasting_flag', 1)->paginate(100);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function checkBroadcasting($userId)
@@ -48,34 +48,44 @@ class Broadcast extends Model
     public function registerInfo($request)
     {
         $userId = Auth::user()->id;
-        $containerId = $this->startContainer();
+        $containerResponse = $this->startContainer(); // JSONオブジェクトを取得    
+        $containerId = $containerResponse->getData()->containerId; // JSONレスポンスからcontainerIdを取得
 
         if ($this->checkBroadcasting($userId))
         {
             $title = $request->title;
             $broadcastExplain = $request->broadcastExplain;
+            $containerLog = $this->getContainerLog($containerId);
             $broadcastingFlag = 1;
             $startOfBroadcast = now();
-
-            DB::insert("INSERT INTO broadcasting_rooms (user_id, room_names, room_explain, broadcasting_flag, created_at) VALUES (?, ?, ?, ?, ?)", [
-                $userId, 
-                $title, 
-                $broadcastExplain, 
-                $broadcastingFlag,
-                $startOfBroadcast
+    
+            // 配信部屋の情報をDBに登録し、IDを取得
+            $broadcastingRoomId = DB::table('broadcasting_rooms')->insertGetId([
+                'user_id' => $userId,
+                'room_names' => $title,
+                'room_explain' => $broadcastExplain,
+                'broadcasting_flag' => $broadcastingFlag,
+                'container_id' => $containerId,
+                'created_at' => $startOfBroadcast,
             ]);
-
-            // RedisにユーザーIDとコンテナIDを保存
-            Redis::hset('user_to_container', $userId, $containerId);
+    
+            // ユーザーのコンテナの情報をDBに登録させる
+            DB::table('users_codes')->insert([
+                'user_id' => $userId,
+                'broadcasting_id' => $broadcastingRoomId, // broadcasting_rooms テーブルのIDを登録
+                'container_id' => $containerId,
+                'tree_data' => null,
+                'file_and_contents' => null,
+                'created_at' => $startOfBroadcast,
+            ]);
             return response()->json(['userId' => $userId, 'containerId' => $containerId]);
         } else {
             // RedisにユーザーIDとコンテナIDを保存
-            Redis::hset('user_to_container', $userId, $containerId);
             return response()->json(['userId' => $userId, 'containerId' => $containerId], 200);
         }
     }
 
-    public function startContainer()
+    private function startContainer()
     {
         $containerName = Str::uuid()->toString(); // ユニークな名前を生成
     
@@ -110,12 +120,16 @@ class Broadcast extends Model
         return response()->json(['containerId' => $containerId]);
     }
 
-    public function watchFileTree() {
-
-    }
-    public function executeCommand($command)
+    private function getContainerLog($containerId)
     {
-        
+        $getLogURL = "http://host.docker.internal:2375/containers/$containerId/logs";
+        $containerLog = Http::withHeaders(['Content-Type' => 'application/json'])
+        ->get($getLogURL);
+        // コンテナ起動が成功したか確認
+        if ($containerLog->failed()) {
+            return response()->json(['error' => 'Failed to start container'], 500);
+        }
+        return response()->json(['containerLog' => $containerLog]);
     }
 
     public function removeContainer()

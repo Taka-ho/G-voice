@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('broadcasting_rooms', function (Blueprint $table) {
-            $table->id()->unique();
+        Schema::create('container_logs', function (Blueprint $table) {
+            $table->id();
 
-            // broadcasts テーブルの外部キー関連付け
-            $table->unsignedBigInteger('user_id')->NotNull();
+            $table->unsignedBigInteger('user_id')->nullable(false);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('room_names', 140)->NotNull();
-            $table->string('room_explain', 140);
-            $table->integer('broadcasting_flag')->NotNull();
+            $table->string('container_id')->nullable(false);
+            $table->foreign('container_id')->references('container_id')->on('broadcasting_rooms')->onDelete('cascade');
+            $table->string('container_log')->NotNull();
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('broadcasts');
+        Schema::dropIfExists('container_logs');
     }
 };

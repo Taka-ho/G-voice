@@ -10,13 +10,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('broadcasting_rooms_comments', function (Blueprint $table) {
+        Schema::create('broadcasting_room_comments', function (Blueprint $table) {
             $table->id()->unique();
-            $table->unsignedBigInteger('broadcasting_rooms_id')->NotNull();
-            $table->foreign('broadcasting_rooms_id')->references('id')->on('broadcasting_rooms')->onDelete('cascade');
-            $table->string('comment');
-            $table->dateTime('created_at');
-            $table->dateTime('updated_at');
+
+            // users テーブルの外部キー関連付け
+            $table->unsignedBigInteger('user_id')->notNull();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->string('comment', 140)->notNull();
+            // broadcasting_rooms テーブルの外部キー関連付け
+            $table->unsignedBigInteger('broadcasting_room_id')->notNull();
+            $table->foreign('broadcasting_room_id')->references('id')->on('broadcasting_rooms')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 
@@ -25,6 +29,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('broadcasting_rooms_comments');
+        // broadcasting_rooms の外部キー制約を解除してテーブルを削除
+        if (Schema::hasTable('broadcasting_room_comments')) {
+            Schema::table('broadcasting_room_comments', function (Blueprint $table) {
+                $table->dropForeign(['user_id']); // 外部キーを削除
+            });
+            Schema::dropIfExists('broadcasting_room_comments'); // テーブルを削除
+        }
     }
+
 };
