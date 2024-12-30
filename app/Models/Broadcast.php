@@ -55,7 +55,7 @@ class Broadcast extends Model
         {
             $title = $request->title;
             $broadcastExplain = $request->broadcastExplain;
-            $containerLog = $this->getContainerLog($containerId);
+            $containerLog = $this->getContainerLog($containerId)->getData()->containerLog;
             Log::debug('$containerLogの値：'.$containerLog);
             $broadcastingFlag = 1;
             $startOfBroadcast = now();
@@ -151,7 +151,7 @@ class Broadcast extends Model
         Log::debug('Decoded Log: ' . $cleanLog);
     
         return response()->json(['containerLog' => $cleanLog]);
-    }        
+    }
     
 
     public function removeContainer()
