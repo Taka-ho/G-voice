@@ -4,20 +4,45 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-	"watch": "vite watch"
+        "watch": "vite watch"
     },
     "devDependencies": {
         "@headlessui/react": "^1.4.2",
+        "@inertiajs/inertia-react": "^0.8.1",
         "@inertiajs/react": "^1.0.0",
         "@tailwindcss/forms": "^0.5.3",
-        "@vitejs/plugin-react": "^4.2.0",
+        "@vitejs/plugin-react": "^4.2.1",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.1",
+        "laravel-echo": "^1.16.1",
         "laravel-vite-plugin": "^1.0.0",
         "postcss": "^8.4.31",
+        "pusher-js": "^8.4.0-rc2",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "sass": "^1.70.0",
+        "simple-peer": "^9.11.1",
+        "socket.io-client": "^2.5.0",
         "tailwindcss": "^3.2.1",
-        "vite": "^5.0.0"
+        "vite": "^5.3.5"
+    },
+    "dependencies": {
+        "@fortawesome/fontawesome-svg-core": "^6.6.0",
+        "@fortawesome/free-brands-svg-icons": "^6.6.0",
+        "@fortawesome/free-solid-svg-icons": "^6.6.0",
+        "@fortawesome/react-fontawesome": "^0.2.2",
+        "@monaco-editor/react": "^4.6.0",
+        "@reduxjs/toolkit": "^2.2.3",
+        "devicon": "^2.16.0",
+        "glob": "^10.3.10",
+        "immer": "^10.0.3",
+        "lodash": "^4.17.21",
+        "phpmyadmin": "^0.0.1-security",
+        "react-monaco-editor": "^0.55.0",
+        "react-router-dom": "^6.22.0",
+        "react-tabs": "^6.0.2",
+        "socket.io": "^4.7.5",
+        "xterm": "^5.3.0",
+        "xterm-addon-unicode11": "^0.6.0"
     }
 }

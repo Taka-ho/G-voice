@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\BroadcastController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +16,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware(['auth:sanctum'])->group(function(){
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+    Route::get('/comments', [CommentController::class, 'index'])->name('get.broadcastingRooms.comment');
+    Route::post('/comments', [CommentController::class, 'store'])->name('store.broadcastingRooms.comment');
+    Route::post('/broadcast/down', [BroadcastController::class, 'down'])->name('broadcast.down');
+    Route::get('/broadcast/runCode', [BroadcastController::class, 'runCode'])->name('broadcast.runCode');
+    Route::post('/broadcast/runCode', [BroadcastController::class, 'runCode']);
+    Route::get('/broadcasting', [BroadcastController::class, 'rooms']);
+    Route::post('/execute-command', [BroadcastController::class, 'executeCommand']);
 });

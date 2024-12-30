@@ -1,0 +1,23 @@
+$blue: rgb(77, 148, 255);
+
+.contextMenu {
+  &:not(.showContextMenu) {
+    &:hover {
+      color: $blue;
+      cursor: pointer;
+    }
+  }
+}
+
+.data {
+  &:not(.showContextMenu) {
+    &:hover {
+      color: $blue;
+      cursor: pointer;
+    }
+  }
+}
+
+.FileTree {
+  margin-top: 1%;
+}
