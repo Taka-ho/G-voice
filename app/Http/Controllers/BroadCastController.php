@@ -42,8 +42,6 @@ class BroadCastController extends Controller
     {
         // Decode the JSON content from the response
         $data = json_decode($userIdAndContainerId->getContent(), true);
-        Log::debug('$dataの値：' . print_r($data, true)); // 配列を文字列に変換してログに出力
-        
         // Extract userId
         if (isset($data['userId'])) {
             $userId = $data['userId'];

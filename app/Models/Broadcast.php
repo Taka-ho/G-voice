@@ -56,6 +56,7 @@ class Broadcast extends Model
             $title = $request->title;
             $broadcastExplain = $request->broadcastExplain;
             $containerLog = $this->getContainerLog($containerId);
+            Log::debug('$containerLogの値：'.$containerLog);
             $broadcastingFlag = 1;
             $startOfBroadcast = now();
     
@@ -76,6 +77,14 @@ class Broadcast extends Model
                 'container_id' => $containerId,
                 'tree_data' => null,
                 'file_and_contents' => null,
+                'created_at' => $startOfBroadcast,
+            ]);
+
+            // コンテナ起動時のログをテーブルにINSERTさせる
+            DB::table('container_logs')->insert([
+                'user_id' => $userId,
+                'container_id' => $containerId,
+                'container_log' => $containerLog,
                 'created_at' => $startOfBroadcast,
             ]);
             return response()->json(['userId' => $userId, 'containerId' => $containerId]);
@@ -122,15 +131,28 @@ class Broadcast extends Model
 
     private function getContainerLog($containerId)
     {
-        $getLogURL = "http://host.docker.internal:2375/containers/$containerId/logs";
+        $getLogURL = "http://host.docker.internal:2375/containers/$containerId/logs?stdout=true&stderr=true";
         $containerLog = Http::withHeaders(['Content-Type' => 'application/json'])
-        ->get($getLogURL);
-        // コンテナ起動が成功したか確認
+            ->get($getLogURL);
+    
         if ($containerLog->failed()) {
-            return response()->json(['error' => 'Failed to start container'], 500);
+            return response()->json(['error' => 'failed to get container logs'], 500);
         }
-        return response()->json(['containerLog' => $containerLog]);
-    }
+    
+        // バイナリデータを文字列として解釈
+        $rawLog = $containerLog->body();
+        
+        // バイナリデータをUTF-8に変換
+        $decodedLog = mb_convert_encoding($rawLog, 'UTF-8', 'UTF-8');
+    
+        // 不要なバイナリ文字を削除
+        $cleanLog = preg_replace('/[\x00-\x1F\x7F]/', '', $decodedLog);
+        
+        Log::debug('Decoded Log: ' . $cleanLog);
+    
+        return response()->json(['containerLog' => $cleanLog]);
+    }        
+    
 
     public function removeContainer()
     {
