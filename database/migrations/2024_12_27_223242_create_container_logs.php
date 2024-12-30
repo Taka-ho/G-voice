@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('container_id')->nullable(false);
             $table->foreign('container_id')->references('container_id')->on('broadcasting_rooms')->onDelete('cascade');
-            $table->string('container_log')->NotNull();
+            $table->text('container_log')->NotNull();
             $table->timestamps();
         });
     }
