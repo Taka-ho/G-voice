@@ -17,6 +17,8 @@ let userId = null;
  * @param {string} containerId - DockerコンテナID
  * @returns {Promise<string>} - 取得したユーザーID
  */
+
+/*
 const getUserId = async (containerId) => {
   if (!userId) {
     try {
@@ -30,7 +32,7 @@ const getUserId = async (containerId) => {
   }
   return userId;
 };
-
+ */
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
