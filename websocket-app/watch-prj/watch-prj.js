@@ -1,6 +1,7 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import axios from 'axios';
+import sendTargetCacheObject from './sendUsersCodeAsCache';
 
 const app = express();
 const port = 3000;
@@ -9,34 +10,26 @@ app.use(express.json());
 
 const wss = new WebSocketServer({ port: 8080 });
 
-// グローバル変数で userId を保持
-let userId = null;
-
 /**
  * Laravel APIから userId を取得
  * @param {string} containerId - DockerコンテナID
  * @returns {Promise<string>} - 取得したユーザーID
  */
 
-/*
-const getUserId = async (containerId) => {
-  if (!userId) {
-    try {
-      const response = await axios.get(`http://sail/api/searchUserId/${containerId}`);
-      userId = response.data.userId; // Laravelの期待されるレスポンス形式: { "userId": "value" }
-      console.log(`User ID fetched: ${userId}`);
-    } catch (error) {
-      console.error(`Error fetching userId: ${error.message}`);
-      throw new Error('Unable to fetch userId from Laravel API');
-    }
-  }
-  return userId;
-};
- */
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
     const { treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange } = parsedMessage;
+    try {
+      // cacheDataを呼び出す
+      const cachedData = await sendTargetCacheObject.cacheData(containerId, treeData, fileAndContents);
+      if (cachedData) {
+        sendToDB(cachedData);
+      }
+    } catch (error) {
+        console.error('エラー:', error);
+        ws.send(JSON.stringify({ status: "error", message: "データのキャッシュ中にエラーが発生しました。" }));
+    }
 
     const sanitizeName = (name) => name.replace(/\s+/g, '');
 
@@ -48,6 +41,19 @@ wss.on('connection', (ws) => {
       }
       if (node.children) {
         node.children.forEach(child => applyContentsToTree(child));
+      }
+    };
+
+    // キャッシュの有効期限が切れているものをLaravelアプリケーション側にPOSTさせる。
+    const sendToDB = async (cachedData) => {
+      try {
+          const response = await axios.post('http://sail/api/insertUsersCode', {
+              data: cachedData // 送信するデータ
+          });
+          console.log('データがDBに挿入されました:', response.data);
+      } catch (error) {
+          console.error('DBへの送信中にエラーが発生しました:', error);
+          ws.send(JSON.stringify({ status: "error", message: "DBへのデータ送信中にエラーが発生しました。" }));
       }
     };
 
@@ -119,24 +125,15 @@ wss.on('connection', (ws) => {
       }
     };
 
-    try {
-      // 初回のみ userId を取得
-      const fetchedUserId = await getUserId(containerId);
-      console.log(`Using User ID: ${fetchedUserId}`);
+    applyContentsToTree(treeData);
 
-      applyContentsToTree(treeData);
-
-      // リネーム処理
-      if (pathBeforeChange !== pathAfterChange) {
-        await moveFile(containerId, pathBeforeChange, pathAfterChange);
-      }
-
-      await createOrUpdateStructure(treeData);
-      ws.send(JSON.stringify({ success: true, parsedTreeData: treeData }));
-    } catch (error) {
-      console.error(`Error processing message: ${error.message}`);
-      ws.send(JSON.stringify({ success: false, error: error.message }));
+    // リネーム処理
+    if (pathBeforeChange !== pathAfterChange) {
+      await moveFile(containerId, pathBeforeChange, pathAfterChange);
     }
+
+    await createOrUpdateStructure(treeData);
+    ws.send(JSON.stringify({ success: true, parsedTreeData: treeData }));
   });
 });
 
