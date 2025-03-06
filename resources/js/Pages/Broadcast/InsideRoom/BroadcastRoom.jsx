@@ -50,23 +50,6 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
   const toggleShare = () => setSharing(!isSharing);
 
-  const handleEndBroadcast = () => {
-    if (window.confirm('Are you sure you want to end the broadcast?')) {
-      fetch('/api/broadcast/down', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-      })
-        .then((response) => response.json())
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-    }
-  };
-
   return (
     <div className='all-space'>
       <Head title="配信部屋〜" />

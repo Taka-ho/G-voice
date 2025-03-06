@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users_codes', function (Blueprint $table) {
+        Schema::create('code_of_users', function (Blueprint $table) {
             $table->id();
             // user_idをUsersテーブルから外部キーとして取得
             $table->unsignedBigInteger('user_id')->nullable(false);
@@ -34,8 +34,8 @@ return new class extends Migration
     public function down(): void
     {
         // users_codes テーブルの外部キー制約を解除
-        if (Schema::hasTable('users_codes')) {
-            Schema::table('users_codes', function (Blueprint $table) {
+        if (Schema::hasTable('code_of_users')) {
+            Schema::table('code_of_users', function (Blueprint $table) {
                 $table->dropForeign(['broadcasting_id']); // 参照している外部キーを削除
                 $table->dropForeign(['container_id']); // container_idの外部キーも削除
             });
@@ -51,5 +51,4 @@ return new class extends Migration
             Schema::dropIfExists('users');
         }
     }
-    
 };

@@ -17,9 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->NotNull();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('room_names', 140)->NotNull();
+            $table->string('container_id', 64)->NotNull()->unique();
             $table->string('room_explain', 140)->nullable();
             $table->integer('broadcasting_flag')->NotNull();
-            $table->string('container_id', 64)->nullable()->unique();
             $table->timestamps();
         });
     }

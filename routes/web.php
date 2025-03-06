@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ProfileController;
@@ -16,8 +15,8 @@ use App\Http\Controllers\BroadcastController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-Route::get('/', [BroadcastController::class, 'index'])->name('broadcast.index');
 
+Route::get('/', [BroadcastController::class, 'Index'])->name('broadcast.Index');
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -32,9 +31,10 @@ Route::middleware('auth')->group(function () {
     })->name('broadcast.start');
 
     Route::post('/broadcast/create', [BroadcastController::class, 'createRoom'])->name('broadcast.create');
-    Route::get('/broadcast/down/{id}', [BroadcastController::class, 'down'])->name('broadcast.down');
     Route::get('/broadcast/{userId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
     Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);    
+
+    Route::get('/downBroadcast', [BroadCastController::class, 'DownBroadcast'])->name('broadcast.DownBroadcast');
 });
 
 require __DIR__.'/auth.php';
