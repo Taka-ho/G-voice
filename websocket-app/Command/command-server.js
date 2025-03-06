@@ -12,7 +12,7 @@ const wss = new WebSocketServer({ port: 7070 });
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const { command, containerId } = JSON.parse(message);
-    const baseURL = 'http://host.docker.internal:2375';
+    const baseURL = 'http://localhost:2375';
     console.log(`Executing command: ${command}`);    
     if (!command || !containerId) {
       ws.send(JSON.stringify({ output: 'Command and containerId are required' }));

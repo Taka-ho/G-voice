@@ -19,7 +19,7 @@ app.post('/file-in-container', async (req, res) => {
     // コンテナ内のファイルリストを取得するコマンド
     const command = `echo '{"id": 1, "name": "root", "children": ['$(for file in /root/root/*; do if [[ -f "$file" ]]; then echo "{\"id\": $(date +%s%N | cut -b1-13), \"name\": \"$(basename "$file")\", \"content\": \"$(cat "$file" | sed 's/"/\\"/g')\"},"; else echo "{\"id\": $(date +%s%N | cut -b1-13), \"name\": \"$(basename "$file")\", \"content\": \"File does not exist\"},"; fi; done | sed '$ s/,$//')']}'`;
     console.log(`実行するコマンド: ${command}`); // コマンド内容を確認
-    const baseURL = 'http://host.docker.internal:2375';
+    const baseURL = 'http://localhost:2375';
 
     const execCreateResponse = await axios.post(`${baseURL}/containers/${containerId}/exec`, {
       AttachStdout: true,

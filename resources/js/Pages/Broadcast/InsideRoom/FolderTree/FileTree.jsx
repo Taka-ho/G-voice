@@ -18,6 +18,7 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   const [pathBeforeChange, setPathBeforeChange] = useState('');
   const [pathAfterChange, setPathAfterChange] = useState('');
   const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
+  const [currentItemName, setCurrentItemName] = useState(''); // 現在のアイテム名を管理
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080');
@@ -116,6 +117,24 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
       localStorage.setItem('treeData', JSON.stringify(updatedTree));
       return updatedTree;
     });
+  };
+
+  const renderTree = (node) => {
+    return (
+      <li key={node.id}>
+        <div onClick={() => clickedFile(node)} onContextMenu={(e) => {
+          e.preventDefault();
+          setCurrentItemName(node.name); // コンテキストメニューのためにアイテム名を設定
+        }}>
+          {node.name} {node.children ? (node.isOpen ? '-' : '+') : null}
+        </div>
+        {node.isOpen && node.children && node.children.length > 0 && (
+          <ul>
+            {node.children.map(renderTree)}
+          </ul>
+        )}
+      </li>
+    );
   };
 
   return (

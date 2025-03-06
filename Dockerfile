@@ -20,6 +20,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Node.jsのインストール
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs
 
+# Redisクライアントのインストール
+RUN git clone https://github.com/phpredis/phpredis.git /usr/src/php/ext/redis && \
+  docker-php-ext-install redis
+
 # 作業ディレクトリの設定
 WORKDIR /app
 

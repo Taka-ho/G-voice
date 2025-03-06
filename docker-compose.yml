@@ -27,7 +27,7 @@ services:
         depends_on:
             - mysql
             - redis
-            - command-websocket
+            - command
             - watch-prj
             - file-in-container
     watch-prj:
@@ -43,6 +43,7 @@ services:
         networks:
             - sail
             - websocket_network
+            - redis_network # Redisネットワークを追加
         depends_on:
             - mysql
     mysql:
@@ -74,8 +75,8 @@ services:
             - websocket_network
         depends_on:
             - mysql
-    command-websocket:
-        image: command-websocket:latest
+    command:
+        image: command:latest
         ports:
             - '3030:3030'
             - '7070:7070'
@@ -88,7 +89,6 @@ services:
             - websocket_network
         depends_on:
             - mysql
-
         healthcheck:
             test:
                 - CMD
@@ -103,10 +103,13 @@ services:
             - '6379:6379'
         networks:
             - sail
+            - redis_network # Redis専用ネットワーク
 networks:
     sail:
         driver: bridge
     websocket_network:
+        driver: bridge
+    redis_network: # 新しいRedisネットワークを追加
         driver: bridge
 volumes:
     sail-mysql:

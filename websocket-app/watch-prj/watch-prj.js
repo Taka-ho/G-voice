@@ -1,7 +1,7 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import axios from 'axios';
-import sendTargetCacheObject from './sendUsersCodeAsCache';
+import sendTargetCacheObject from './sendUsersCodeAsCache.js';
 
 const app = express();
 const port = 3000;
@@ -20,6 +20,18 @@ wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
     const { treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange } = parsedMessage;
+    // キャッシュの有効期限が切れているものをLaravelアプリケーション側にPOSTさせる。
+    const sendToDB = async (cachedData) => {
+      try {
+          const response = await axios.post('http://sail/api/insertUsersCode', {
+              data: cachedData // 送信するデータ
+          });
+          console.log('データがDBに挿入されました:', response.data);
+      } catch (error) {
+          console.error('DBへの送信中にエラーが発生しました:', error);
+          ws.send(JSON.stringify({ status: "error", message: "DBへのデータ送信中にエラーが発生しました。" }));
+      }
+    };
     try {
       // cacheDataを呼び出す
       const cachedData = await sendTargetCacheObject.cacheData(containerId, treeData, fileAndContents);
@@ -41,19 +53,6 @@ wss.on('connection', (ws) => {
       }
       if (node.children) {
         node.children.forEach(child => applyContentsToTree(child));
-      }
-    };
-
-    // キャッシュの有効期限が切れているものをLaravelアプリケーション側にPOSTさせる。
-    const sendToDB = async (cachedData) => {
-      try {
-          const response = await axios.post('http://sail/api/insertUsersCode', {
-              data: cachedData // 送信するデータ
-          });
-          console.log('データがDBに挿入されました:', response.data);
-      } catch (error) {
-          console.error('DBへの送信中にエラーが発生しました:', error);
-          ws.send(JSON.stringify({ status: "error", message: "DBへのデータ送信中にエラーが発生しました。" }));
       }
     };
 

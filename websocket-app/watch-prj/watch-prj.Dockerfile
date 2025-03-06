@@ -11,12 +11,13 @@ COPY ./package*.json ./
 RUN npm install
 RUN npm install axios
 RUN npm install chokidar
+RUN npm install ioredis
 # Copy all files from the websocket-app directory to the working directory inside the container
 COPY . .
 
 # Expose the ports the application will use
 EXPOSE 8080
 EXPOSE 3000
-
+EXPOSE 6379
 # Command to start the application
 CMD ["npm", "start"]

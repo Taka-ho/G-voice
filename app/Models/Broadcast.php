@@ -56,7 +56,6 @@ class Broadcast extends Model
             $title = $request->title;
             $broadcastExplain = $request->broadcastExplain;
             $containerLog = $this->getContainerLog($containerId)->getData()->containerLog;
-            Log::debug('$containerLogの値：'.$containerLog);
             $broadcastingFlag = 1;
             $startOfBroadcast = now();
     
@@ -96,39 +95,84 @@ class Broadcast extends Model
 
     private function startContainer()
     {
-        $containerName = Str::uuid()->toString(); // ユニークな名前を生成
+        $containerName = Str::uuid()->toString();
     
-        // コンテナ作成パラメータ
         $param = [
             'Image' => 'users-container',
-            'name' => $containerName, // ここでコンテナ名を設定
+            'name' => $containerName,
         ];
     
         $createUrl = "http://host.docker.internal:2375/containers/create";
     
-        // コンテナ作成リクエスト
         $responseOfCreated = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($createUrl, $param);
-
-        // コンテナ作成が成功したか確認
+    
         if ($responseOfCreated->failed()) {
-            return response()->json(['error' => 'Failed to create container'], 500);
+            throw new \Exception('Failed to create container');
         }
-        // コンテナIDを取得
+    
         $containerId = $responseOfCreated->json('Id');
         $startURL = "http://host.docker.internal:2375/containers/{$containerId}/start";
-
-        // コンテナ起動リクエスト
+    
         $responseOfStarted = Http::withHeaders(['Content-Type' => 'application/json'])
             ->post($startURL);
-        // コンテナ起動が成功したか確認
+    
         if ($responseOfStarted->failed()) {
-            return response()->json(['error' => 'Failed to start container'], 500);
+            throw new \Exception('Failed to start container');
         }
-
-        return response()->json(['containerId' => $containerId]);
+    
+        return ['containerId' => $containerId]; // JSONResponseではなく、配列を返す
     }
 
+    // ユーザーが配信で使用したコンテナを、配信を削除する際に停止させるメソッド
+    public function stopBroadcast()
+    {
+        $userId = Auth::user()->id;
+    
+        // ユーザーIDに基づいてbroadcasting_roomsからデータを取得
+        $broadcastingRoom = BroadcastingRoom::where('user_id', $userId)->first();
+    
+        // データが存在するか確認
+        if ($broadcastingRoom) {
+            // 各カラムの値を変数に格納
+            $roomId = $broadcastingRoom->id;
+            $roomNames = $broadcastingRoom->room_names;
+            $containerId = $broadcastingRoom->container_id;
+            $roomExplain = $broadcastingRoom->room_explain;
+            $broadcastingFlag = $broadcastingRoom->broadcasting_flag;
+
+            $containerLog = $this->getContainerLog($containerId);
+
+            $insertDataOfContainerLog = ([
+                'container_log' => $containerLog
+            ]);
+
+            DB::table('container_logs')
+                ->where('id', $userId)
+                ->update($insertDataOfContainerLog);
+            $data = ([
+                'broadcasting_flag' => '0'
+            ]);
+
+            DB::table('broadcasting_rooms')
+                ->where('id', $roomId)
+                ->update($data);
+            $this->stopContainerOfUser($containerId);
+        }
+    }
+
+    private function stopContainerOfUser($containerId)
+    {
+        // コンテナを停止するリクエストを送信
+        $response = Http::post("http://host.docker.internal:2375/containers/{$containerId}/stop");
+
+        // レスポンスの確認
+        if ($response->successful()) {
+            return response()->json(['message' => 'Container stopped successfully.']);
+        } else {
+            return response()->json(['error' => 'Failed to stop container.'], $response->status());
+        }
+    }
     private function getContainerLog($containerId)
     {
         $getLogURL = "http://host.docker.internal:2375/containers/$containerId/logs?stdout=true&stderr=true";
@@ -136,26 +180,13 @@ class Broadcast extends Model
             ->get($getLogURL);
     
         if ($containerLog->failed()) {
-            return response()->json(['error' => 'failed to get container logs'], 500);
+            throw new \Exception('Failed to get container logs');
         }
     
-        // バイナリデータを文字列として解釈
         $rawLog = $containerLog->body();
-        
-        // バイナリデータをUTF-8に変換
         $decodedLog = mb_convert_encoding($rawLog, 'UTF-8', 'UTF-8');
-    
-        // 不要なバイナリ文字を削除
         $cleanLog = preg_replace('/[\x00-\x1F\x7F]/', '', $decodedLog);
-        
-        Log::debug('Decoded Log: ' . $cleanLog);
     
-        return response()->json(['containerLog' => $cleanLog]);
-    }
-    
-
-    public function removeContainer()
-    {
-        
+        return ['containerLog' => $cleanLog]; // JSONResponseではなく、配列を返す
     }
 }
