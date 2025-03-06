@@ -56,9 +56,9 @@ const InfiniteScroll = (props) => {
       {/* データがある場合 */}
       {data.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.map((item) => (
+          {data.map((item, index) => (
             <div
-              className='cursor-pointer mt-8 border rounded-lg bg-gray-100 p-4 shadow hover:bg-gray-200 transition'
+              className={`cursor-pointer mt-8 border rounded-lg bg-gray-100 p-4 shadow hover:bg-gray-200 transition ${index >= data.length - 3 ? 'mb-[5%]' : ''}`}
               onClick={() => handleRoomClick(item.id)}
               key={item.id}
             >
