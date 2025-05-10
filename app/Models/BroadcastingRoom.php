@@ -4,22 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BroadcastingRoom extends Model
 {
     use HasFactory;
 
-    public function user(): HasOne
-    {
-        return $this->hasOne(User::class);
-    }
+    protected $table = 'broadcasting_rooms';
+    protected $primaryKey = 'id';
+    public $timestamps = true;
 
-    public function comments(): HasMany
-    {
-        return $this->hasMany(Comment::class);
-    }
-    
+    protected $fillable = [
+        'user_id',
+        'room_names',
+        'container_id',
+        'room_explain',
+        'broadcasting_flag',
+    ];
 }

@@ -22,8 +22,8 @@ return new class extends Migration
             // container_idをstring型に修正
             $table->string('container_id')->nullable(false);
             $table->foreign('container_id')->references('container_id')->on('broadcasting_rooms')->onDelete('cascade');
-            $table->text('tree_data')->nullable();
-            $table->text('file_and_contents')->nullable();
+            $table->json('tree_data')->nullable();
+            $table->json('file_and_contents')->nullable();
             $table->timestamps();
         });
     }

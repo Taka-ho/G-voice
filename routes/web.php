@@ -26,12 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/broadcast/start', function () {
-        return Inertia::render('Broadcast/NewRoom');
-    })->name('broadcast.start');
+    Route::get('/broadcast/start', [BroadcastController::class, 'BroadcastStart'])->name('broadcast.start');
 
     Route::post('/broadcast/create', [BroadcastController::class, 'createRoom'])->name('broadcast.create');
-    Route::get('/broadcast/{userId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
+    Route::get('/broadcast/{broadcastingRoomId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
     Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);    
 
     Route::get('/downBroadcast', [BroadCastController::class, 'DownBroadcast'])->name('broadcast.DownBroadcast');
