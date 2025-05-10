@@ -1,18 +1,21 @@
 .react-tabs {
   -webkit-tap-highlight-color: transparent;
-  margin-left: 5%;
+  margin-left: 1%;
 }
 
 .react-tabs__tab-list {
   border-bottom: 1px solid #aaa;
   padding: 0;
 }
+
 .react-tabs__tab {
 font-size: 15px;
 }
+
 .react-tabs__tab--selected {
   font-size: 15px;
 }
+
 .react-tabs__tab {
   display: inline-block;
   border: 1px solid transparent;

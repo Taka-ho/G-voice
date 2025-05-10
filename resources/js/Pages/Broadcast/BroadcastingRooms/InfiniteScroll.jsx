@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './css/RoomList.scss';
 
-const InfiniteScroll = (props) => {
+const InfiniteScroll = () => {
   const [data, setData] = useState([]); // 取得したデータ
   const [page, setPage] = useState(1); // 現在のページ番号
   const [loading, setLoading] = useState(false); // データを読み込んでいる最中かどうか
+  const [hasMore, setHasMore] = useState(true); // 追加データがあるかどうか
 
   useEffect(() => {
-    // コンポーネントがマウントされたときにデータを読み込む
+    // 初回データを読み込む
     loadData();
 
     // スクロールイベントのリスナーを追加
@@ -18,8 +19,15 @@ const InfiniteScroll = (props) => {
     };
   }, []);
 
+  useEffect(() => {
+    // pageが変わったときにデータを再取得
+    if (page > 1) {
+      loadData();
+    }
+  }, [page]);
+
   const handleScroll = () => {
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !loading) {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !loading && hasMore) {
       // ページの最下部に達したら新しいデータを読み込む
       setPage(prevPage => prevPage + 1);
     }
@@ -40,6 +48,11 @@ const InfiniteScroll = (props) => {
 
       // 取得したデータをステートに追加
       setData(prevData => [...prevData, ...newData.data]);
+
+      // 追加データがない場合はhasMoreをfalseに設定
+      if (newData.data.length < 15) {
+        setHasMore(false);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -64,9 +77,6 @@ const InfiniteScroll = (props) => {
             >
               <h2 className='font-semibold text-lg'>{item.room_names}</h2>
               <p className='text-gray-600'>{item.room_explain}</p>
-              <div className='mt-2 text-gray-500 text-sm'>
-                <span>Container ID: {item.container_id}</span>
-              </div>
             </div>
           ))}
         </div>
@@ -78,6 +88,8 @@ const InfiniteScroll = (props) => {
       )}
       {/* ローディングスピナーなどを表示する部分 */}
       {loading && <div className="text-center mt-4">Loading...</div>}
+      {/* 追加データがない場合のメッセージ */}
+      {!hasMore && <div className="text-center mt-4">これ以上のデータはありません。</div>}
     </div>
   );
 };

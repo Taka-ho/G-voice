@@ -74,7 +74,6 @@ class CodeOfUser extends Model
                     ]);
 
                     DB::commit();
-                    Log::debug("Data inserted successfully.");
                 } catch (\Exception $e) {
                     DB::rollBack();
                     Log::error("DB挿入エラー: " . $e->getMessage());

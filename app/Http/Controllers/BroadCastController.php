@@ -4,95 +4,119 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Broadcast;
 use App\Models\CodeOfUser;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Providers\RouteServiceProvider;
+use App\Services\BroadcastingService;
+use App\Models\BroadcastingRoom;
 
 class BroadCastController extends Controller
 {
-    //配信ルームについてのController
+    protected $broadcastingService;
 
+    public function __construct(BroadcastingService $broadcastingService)
+    {
+        $this->broadcastingService = $broadcastingService;
+    }
+
+    // 配信ルームについてのController
     public function Index() 
     {
-        $this->RoomsList();
         return redirect(RouteServiceProvider::HOME);
     }
+
+    public function BroadcastStart()
+    {
+        $user = Auth::user();
+
+        return Inertia::render('Broadcast/NewRoom', [
+            'user' => [
+                'username' => $user->name
+            ]
+        ]);
+    }
+    
 
     public function RoomsList()
     {
         $broadcasting = DB::table('broadcasting_rooms')
             ->where('broadcasting_flag', 1)
             ->paginate(15);
-    
+
         // JSON形式で返す
         return response()->json($broadcasting);
     }
-    
 
     public function DownBroadcast()
     {
         try {
-            $register = new Broadcast;
-            $register->stopBroadcast();
+            $this->broadcastingService->stopBroadcast();
             return response()->json(['message' => 'Broadcast stopped successfully.']);
         } catch (\Exception $e) {
-            \Log::error("Error stopping broadcast: " . $e->getMessage());
+            Log::error("Error stopping broadcast: " . $e->getMessage());
             return response()->json(['error' => 'Failed to stop broadcast.'], 500);
         }
     }
 
-    public function GoToRoom($userIdAndContainerId)
+    public function GoToRoom($broadcastingRoomId)
     {
-        // Decode the JSON content from the response
-        $data = json_decode($userIdAndContainerId->getContent(), true);
-        // Extract userId
-        if (isset($data['userId'])) {
-            $userId = $data['userId'];
-        } else {
-            Log::error('userId not found');
-            return response()->json(['error' => 'userId not found'], 400);
-        }
-
-        // Extract containerId directly
-        if (isset($data['containerId'])) {
-            $containerId = $data['containerId']; // 修正: 直接containerIdを取得
-        } else {
-            Log::error('containerId not found');
-            return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 400);
-        }
-
-        if ($userId) {
+        Log::debug('GoToRoomの$broadcastingRoomIdの値：' . json_encode($broadcastingRoomId));
+    
+        // JSONデータをデコード
+        $broadcastingRoomData = json_decode($broadcastingRoomId, true); // trueを指定して連想配列としてデコード
+    
+        // broadcastingRoomDataが存在するかを確認
+        if ($broadcastingRoomData && isset($broadcastingRoomData['id'])) {
             return redirect()->route("broadcast.insideRoom", [
-                'userId' => $userId,
-                'containerId' => $containerId
+                'broadcastingRoomId' => $broadcastingRoomData['id'] // idをパラメーターとして渡す
             ]);
         } else {
-            Log::error('No room found for user_id: ' . $userId);
+            Log::error('No room found for broadcastingRoomId: ' . json_encode($broadcastingRoomData));
             return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 404);
         }
-    }
+    }    
 
-    public function BroadcastRoom(Request $request)
+    public function BroadcastRoom($broadcastingRoomId)
     {
         $userId = Auth::user()->id;
 
-        if (DB::table('broadcasting_rooms')->where('user_id', $userId)->exists()) {
-            return Inertia::render("Broadcast/InsideRoom/AllBroadcasting");
-        } else {
-            return redirect()->route("broadcast.index");
+        // ユーザーに関連するブロードキャスティングルームを取得
+        $infoOfBroadcastingRoom = BroadcastingRoom::find($broadcastingRoomId);
+
+        // ルームが存在しない場合
+        if (!$infoOfBroadcastingRoom) {
+            return redirect()->route("broadcast.start");
         }
+
+        // 対象のuserIdがbroadcasting_roomsのidと一致しない場合は、ルーム作成のページにリダイレクトさせる
+        if ($infoOfBroadcastingRoom->user_id != $userId) {
+            return redirect()->route("broadcast.start");
+        }
+
+        return Inertia::render("Broadcast/InsideRoom/AllBroadcasting");
     }
 
     public function createRoom(Request $request)
     {
-        Inertia::render('Broadcast/NewRoom');
-        $register = new Broadcast;
-        $userIdAndContainerId = $register->registerInfo($request);
+        // すでにルーム作成済みの場合、そのユーザーのコンテナが複数作られることがないようにする。trueの場合は、ルームのIDの配信画面へ遷移する。
+        $resultData =$this->broadcastingService->haveBroadcastingRoom();
 
-        return $this->GoToRoom($userIdAndContainerId);
+         if ($resultData['result'] == true) {
+            $broadcastingRoomId = json_encode(['id' => $resultData['broadcastingRoomId']]);
+            $this->GoToRoom($broadcastingRoomId);
+        }
+        $broadcastingRoomId = $this->broadcastingService->registerInfo($request);
+        Log::debug(print_r($broadcastingRoomId, true));
+        // broadcastingRoomIdが配列でないことを確認
+        if (is_array($broadcastingRoomId)) {
+            // 配列の中にbroadcastingRoomIdがある場合
+            $broadcastingRoomId = $broadcastingRoomId['broadcastingRoomId'] ?? null; // 必要に応じて適切に取得
+            Log::debug($broadcastingRoomId);
+        }
+
+        return $this->GoToRoom($broadcastingRoomId);
     }
 
     public function streamAudio(Request $request)

@@ -27,3 +27,4 @@ Route::middleware(['auth:sanctum'])->group(function(){
 // ユーザーのソースコード(treeData, file_and_contents)をwatch-prjコンテナから受け取る。
 Route::post('/insertUsersCode', [BroadcastController::class, 'insertUsersCode']);
 Route::get('/roomsList', [BroadcastController::class, 'RoomsList'])->name('broadcast.RoomsList');
+Route::get('/getContainerId{broadcastingRoomId}', [GetContainerService::class, 'GetContainerId'])->name('broadcast.getContainerId');
