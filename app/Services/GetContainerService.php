@@ -28,5 +28,4 @@ Class GetContainerService {
         // 値が存在しない場合はnullを返す
         return null;
     }
-
 }
