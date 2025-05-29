@@ -21,6 +21,13 @@ class BroadcastingService
     public function registerInfo($request)
     {
         $userId = Auth::user()->id;
+
+        // すでにユーザーが配信を立ち上げている場合、そのユーザーが立ち上げているルームに遷移させる
+        $activeRoomIdOfUser = $this->findAlreadyActiveRoom($userId);
+        if ($activeRoomIdOfUser != null) {
+            return $activeRoomIdOfUser;
+        }
+
         $containerResponse = $this->startContainer();
         $containerId = $containerResponse['containerId'];
 
@@ -30,7 +37,7 @@ class BroadcastingService
         $containerLog = $this->getContainerLog($containerId)['containerLog'];
         $broadcastingFlag = 1;
         $startOfBroadcast = now();
-    
+
         // 配信部屋の情報をDBに登録し、IDを取得
         $broadcastingRoomId = BroadcastingRoom::insertGetId([
             'user_id' => $userId,
@@ -40,7 +47,7 @@ class BroadcastingService
             'container_id' => $containerId,
             'created_at' => $startOfBroadcast,
         ]);
-    
+
         // ユーザーのコンテナの情報をDBに登録
         DB::table('code_of_users')->insert([
             'user_id' => $userId,
@@ -50,7 +57,7 @@ class BroadcastingService
             'file_and_contents' => null,
             'created_at' => $startOfBroadcast,
         ]);
-    
+
         // コンテナ起動時のログをテーブルにINSERT
         DB::table('container_logs')->insert([
             'user_id' => $userId,
@@ -58,9 +65,9 @@ class BroadcastingService
             'container_log' => $containerLog,
             'created_at' => $startOfBroadcast,
         ]);
-    
+
         $this->setContainerIdAndBroadcastingRoomId($broadcastingRoomId, $containerId);
-        return ['broadcastingRoomId' => $broadcastingRoomId];
+        return $broadcastingRoomId;
     }
 
     private function setContainerIdAndBroadcastingRoomId($broadcastingRoomId, $containerId)
@@ -116,18 +123,18 @@ class BroadcastingService
             try {
                 // コンテナのログを取得
                 $containerLog = $this->getContainerLog($containerId);
-    
+
                 // コンテナログをデータベースに更新
                 DB::table('container_logs')->where('user_id', $userId)->update(['container_log' => $containerLog['containerLog']]);
-    
+
                 // ブロードキャスティングルームのフラグを更新
                 DB::table('broadcasting_rooms')->where('id', $roomId)->update(['broadcasting_flag' => '0']);
-    
+
                 // コンテナを停止
                 $this->stopContainerOfUser($containerId);
-    
+
                 Log::info("Broadcast stopped successfully for user ID: $userId, Room ID: $roomId");
-    
+
                 return response()->json(['message' => 'Broadcast stopped successfully.']);
             } catch (\Exception $e) {
                 Log::error("Error stopping broadcast for user ID: $userId, Room ID: $roomId - " . $e->getMessage());
@@ -173,20 +180,37 @@ class BroadcastingService
         $existingRoom = BroadcastingRoom::where('user_id', $userId)
             ->where('broadcasting_flag', 1)
             ->first();
-        Log::debug($existingRoom);
+
         if ($existingRoom) {
             // IDを取得して変数に格納
             $broadcastingRoomId = $existingRoom->id;
-    
+
             return [
                 'result' => true,
                 'broadcastingRoomId' => $broadcastingRoomId,
             ];
         }
-    
+
         return [
             'result' => false,
             'broadcastingRoomId' => null, // ルームがない場合はnullを返す
         ];
+    }
+
+    private function findAlreadyActiveRoom($userId)
+    {
+        if ($activeRoomOfUser != null) {
+            // JSON形式のデータをデコード
+            $activeRoomOfUser = BroadcastingRoom::where(['user_id' => $userId, 'broadcasting_flag' => 1])->first();
+
+            if ($activeRoomOfUser == null) {
+                return null; // ルームが存在しない場合はnullを返す
+            }
+
+            // idを取得
+            $broadcastingRoomId = $activeRoomOfUser->id;
+        }
+
+        return $broadcastingRoomId;
     }
 }

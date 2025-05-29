@@ -1,12 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState, createContext, useContext } from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import BroadcastRoom from './BroadcastRoom';
 import ViewerDashboard from './Audience/ViewerDashboard';
 import Pusher from 'pusher-js';
 
+const AppDataContext = createContext(null);
+
+export const useAppData = () => {
+  const context = useContext(AppDataContext);
+  if (context === null) {
+    throw new Error('useAppData must be used within an AppDataProvider');
+  }
+  return context;
+};
+
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
-  const [fileAndContents, setFileAndContents] = useState({}); // ファイル内容を格納するオブジェクト
+  const [fileAndContents, setFileAndContents] = useState({});
 
   useEffect(() => {
     fetch('/api/comments')
@@ -29,6 +39,13 @@ const ParentComponent = () => {
       window.location.href = '/';
     });
 
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      endChannel.unbind_all();
+      endChannel.unsubscribe();
+    };
+
   }, []);
 
   const addComment = (newComment) => {
@@ -46,14 +63,10 @@ const ParentComponent = () => {
     })
       .then((response) => response.json())
       .then((data) => {
-        setComments([...comments, data]);
-        fetch('/api/comments')
-          .then(response => response.json())
-          .then(data => setComments(data));
+        setComments(prevComments => [...prevComments, data]);
       });
   };
 
-  // ファイルコンテンツを更新する関数
   const updateFileContents = (fileId, fileName, newContent) => {
     setFileAndContents(prevContents => ({
       ...prevContents,
@@ -64,27 +77,24 @@ const ParentComponent = () => {
     }));
   };
 
+  // データルーターを作成
+  const router = createBrowserRouter([
+    {
+      path: "/broadcast/:id",
+      element: <BroadcastRoom />,
+    },
+    {
+      path: "/broadcast/stream/:id",
+      element: <ViewerDashboard />,
+    },
+    // 他のルート定義を追加
+  ]);
+
   return (
-    <Router>
-      <div>
-        <Routes>
-          <Route path="/broadcast/:id" element={
-            <BroadcastRoom 
-              comments={comments} 
-              addComment={addComment} 
-              updateFileContents={updateFileContents}
-              fileAndContents={fileAndContents}
-            />} 
-          />
-          <Route path="/broadcast/stream/:id" element={
-            <ViewerDashboard 
-              comments={comments} 
-              addComment={addComment} 
-            />} 
-          />
-        </Routes>
-      </div>
-    </Router>
+    <RouterProvider router={router}>
+      <AppDataContext.Provider value={{ comments, addComment, fileAndContents, updateFileContents }}>
+      </AppDataContext.Provider>
+    </RouterProvider>
   );
 };
 

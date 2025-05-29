@@ -62,21 +62,17 @@ class BroadCastController extends Controller
 
     public function GoToRoom($broadcastingRoomId)
     {
-        Log::debug('GoToRoomの$broadcastingRoomIdの値：' . json_encode($broadcastingRoomId));
+        Log::debug($broadcastingRoomId);
     
-        // JSONデータをデコード
-        $broadcastingRoomData = json_decode($broadcastingRoomId, true); // trueを指定して連想配列としてデコード
-    
-        // broadcastingRoomDataが存在するかを確認
-        if ($broadcastingRoomData && isset($broadcastingRoomData['id'])) {
+        if ($broadcastingRoomId != null) {
             return redirect()->route("broadcast.insideRoom", [
-                'broadcastingRoomId' => $broadcastingRoomData['id'] // idをパラメーターとして渡す
+                'broadcastingRoomId' => $broadcastingRoomId // 数値IDを渡す
             ]);
         } else {
-            Log::error('No room found for broadcastingRoomId: ' . json_encode($broadcastingRoomData));
+            Log::error('No room found for broadcastingRoomId: ' . json_encode($broadcastingRoomId));
             return response()->json(['error' => 'エラーが発生しました。しばらくしてからアクセスしてください'], 404);
         }
-    }    
+    }
 
     public function BroadcastRoom($broadcastingRoomId)
     {
@@ -100,24 +96,18 @@ class BroadCastController extends Controller
 
     public function createRoom(Request $request)
     {
-        // すでにルーム作成済みの場合、そのユーザーのコンテナが複数作られることがないようにする。trueの場合は、ルームのIDの配信画面へ遷移する。
-        $resultData =$this->broadcastingService->haveBroadcastingRoom();
-
-         if ($resultData['result'] == true) {
-            $broadcastingRoomId = json_encode(['id' => $resultData['broadcastingRoomId']]);
-            $this->GoToRoom($broadcastingRoomId);
+        $resultData = $this->broadcastingService->haveBroadcastingRoom();
+    
+        if ($resultData['result'] === true) {
+            $broadcastingRoomId = $resultData['broadcastingRoomId']; // 数値の ID
+            return $this->GoToRoom($broadcastingRoomId);
         }
+    
         $broadcastingRoomId = $this->broadcastingService->registerInfo($request);
-        Log::debug(print_r($broadcastingRoomId, true));
-        // broadcastingRoomIdが配列でないことを確認
-        if (is_array($broadcastingRoomId)) {
-            // 配列の中にbroadcastingRoomIdがある場合
-            $broadcastingRoomId = $broadcastingRoomId['broadcastingRoomId'] ?? null; // 必要に応じて適切に取得
-            Log::debug($broadcastingRoomId);
-        }
-
+    
+        // registerInfo の戻り値が数値 ID であることを前提
         return $this->GoToRoom($broadcastingRoomId);
-    }
+    }    
 
     public function streamAudio(Request $request)
     {

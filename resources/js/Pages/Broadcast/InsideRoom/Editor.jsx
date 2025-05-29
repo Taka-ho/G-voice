@@ -3,13 +3,26 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import MonacoEditor from 'react-monaco-editor';
 import './css/Editor.css';
 import './css/Tab.css';
-
+import NavigationModal from './Alert/NavigationModal'
+import UseNavigationConfirmation from './Alert/UseNavigationConfirmation'
 const Editor = ({ selectedFiles, updateFileContents }) => {
   const [fileNames, setFileNames] = useState([]);
   const [fileContents, setFileContents] = useState({});
   const [selectedFileName, setSelectedFileName] = useState('');
   const [fileIds, setFileIds] = useState({});
+  const [shouldBlock, setShouldBlock] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
+  const { confirmNavigation, cancelNavigation } = UseNavigationConfirmation(
+    shouldBlock,
+    showModal,
+    setShowModal
+  );
+
+  useEffect(() => {
+    setTimeout(() => setShowModal(true), 1000); // 1秒後に表示
+  }, []);
+  
   // Sync selected files with Editor
   useEffect(() => {
     if (selectedFiles.length === 0) return;
@@ -86,6 +99,11 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
 
   return (
     <div className="editor-container">
+      <NavigationModal
+        show={showModal}
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+      />
       <Tabs onSelect={handleTabSelect}>
         <TabList>
           {fileNames.map((fileName) => (
