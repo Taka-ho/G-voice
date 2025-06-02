@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
+import { useParams } from 'react-router-dom';
 
 const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
   const [treeData, setTreeData] = useState(() => {
@@ -19,12 +20,12 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   const [pathAfterChange, setPathAfterChange] = useState('');
   const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
   const [currentItemName, setCurrentItemName] = useState(''); // 現在のアイテム名を管理
-
+  const { broadcastingRoomId } = useParams();
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8080');
     const queryString = window.location.search;
     ws.onopen = () => {
-      const message = JSON.stringify({ treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
+      const message = JSON.stringify({ broadcastingRoomId, treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
       ws.send(message);
     };
 

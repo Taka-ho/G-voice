@@ -1,46 +1,62 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
+import Redis from 'ioredis';
 import axios from 'axios';
 import sendTargetCacheObject from './sendUsersCodeAsCache.js';
 
 const app = express();
 const port = 3000;
 
+// Redis クライアント作成（必要に応じてホスト・ポートを指定）
+const redis = new Redis(); // 例: new Redis({ host: 'redis', port: 6379 })
+
 app.use(express.json());
 
 const wss = new WebSocketServer({ port: 8080 });
 
-/**
- * Laravel APIから userId を取得
- * @param {string} containerId - DockerコンテナID
- * @returns {Promise<string>} - 取得したユーザーID
- */
-
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message);
-    const { treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange } = parsedMessage;
-    // キャッシュの有効期限が切れているものをLaravelアプリケーション側にPOSTさせる。
+    const { broadcastingRoomId, treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile } = parsedMessage;
+
+    // Redis から containerId を取得
+    let containerId;
+    try {
+      const key = `broadcast:${broadcastingRoomId}`;
+      const redisData = await redis.hgetall(key);
+
+      if (!redisData || !redisData.container_id) {
+        ws.send(JSON.stringify({ status: "error", message: "Redisからcontainer_idが取得できませんでした。" }));
+        return;
+      }
+
+      containerId = redisData.container_id;
+    } catch (error) {
+      console.error('Redisエラー:', error);
+      ws.send(JSON.stringify({ status: "error", message: "Redisからデータ取得中にエラーが発生しました。" }));
+      return;
+    }
+
     const sendToDB = async (cachedData) => {
       try {
-          const response = await axios.post('http://sail/api/insertUsersCode', {
-              data: cachedData // 送信するデータ
-          });
-          console.log('データがDBに挿入されました:', response.data);
+        const response = await axios.post('http://sail/api/insertUsersCode', {
+          data: cachedData
+        });
+        console.log('データがDBに挿入されました:', response.data);
       } catch (error) {
-          console.error('DBへの送信中にエラーが発生しました:', error);
-          ws.send(JSON.stringify({ status: "error", message: "DBへのデータ送信中にエラーが発生しました。" }));
+        console.error('DBへの送信中にエラーが発生しました:', error);
+        ws.send(JSON.stringify({ status: "error", message: "DBへのデータ送信中にエラーが発生しました。" }));
       }
     };
+
     try {
-      // cacheDataを呼び出す
       const cachedData = await sendTargetCacheObject.cacheData(containerId, treeData, fileAndContents);
       if (cachedData) {
-        sendToDB(cachedData);
+        await sendToDB(cachedData);
       }
     } catch (error) {
-        console.error('エラー:', error);
-        ws.send(JSON.stringify({ status: "error", message: "データのキャッシュ中にエラーが発生しました。" }));
+      console.error('キャッシュ処理エラー:', error);
+      ws.send(JSON.stringify({ status: "error", message: "データのキャッシュ中にエラーが発生しました。" }));
     }
 
     const sanitizeName = (name) => name.replace(/\s+/g, '');
@@ -126,7 +142,6 @@ wss.on('connection', (ws) => {
 
     applyContentsToTree(treeData);
 
-    // リネーム処理
     if (pathBeforeChange !== pathAfterChange) {
       await moveFile(containerId, pathBeforeChange, pathAfterChange);
     }

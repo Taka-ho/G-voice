@@ -17,7 +17,6 @@ export const useAppData = () => {
 const ParentComponent = () => {
   const [comments, setComments] = useState([]);
   const [fileAndContents, setFileAndContents] = useState({});
-
   useEffect(() => {
     fetch('/api/comments')
       .then((response) => response.json())
@@ -67,6 +66,19 @@ const ParentComponent = () => {
       });
   };
 
+  // データルーターを作成
+  const router = createBrowserRouter([
+    {
+      path: "/broadcast/:broadcastingRoomId",
+      element: <BroadcastRoom />,
+    },
+    {
+      path: "/broadcast/stream/:broadcastingRoomId",
+      element: <ViewerDashboard />,
+    },
+    // 他のルート定義を追加
+  ]);
+
   const updateFileContents = (fileId, fileName, newContent) => {
     setFileAndContents(prevContents => ({
       ...prevContents,
@@ -76,19 +88,6 @@ const ParentComponent = () => {
       }
     }));
   };
-
-  // データルーターを作成
-  const router = createBrowserRouter([
-    {
-      path: "/broadcast/:id",
-      element: <BroadcastRoom />,
-    },
-    {
-      path: "/broadcast/stream/:id",
-      element: <ViewerDashboard />,
-    },
-    // 他のルート定義を追加
-  ]);
 
   return (
     <RouterProvider router={router}>

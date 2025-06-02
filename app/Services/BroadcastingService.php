@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use App\Services\RouteServiceProvider;
 
 class BroadcastingService
 {
@@ -66,16 +67,17 @@ class BroadcastingService
             'created_at' => $startOfBroadcast,
         ]);
 
-        $this->setContainerIdAndBroadcastingRoomId($broadcastingRoomId, $containerId);
+        $this->setContainerIdAndBroadcastingRoomIdAndUserId($broadcastingRoomId, $containerId, $userId);
         return $broadcastingRoomId;
     }
 
-    private function setContainerIdAndBroadcastingRoomId($broadcastingRoomId, $containerId)
+    private function setContainerIdAndBroadcastingRoomIdAndUserId($broadcastingRoomId, $containerId, $userId)
     {
         $key = "broadcast:{$broadcastingRoomId}";
         $value = [
-            'container_id' => $containerId,
+            'containerId' => $containerId,
             'broadcastingRoomId' => $broadcastingRoomId,
+            'userId' => $userId
         ];
 
         Redis::hmset($key, $value);
@@ -107,44 +109,59 @@ class BroadcastingService
         return ['containerId' => $containerId];
     }
 
-    public function stopBroadcast()
+    public function stopBroadcast($broadcastingRoomId, $userId, $unmountFlag)
     {
-        $userId = Auth::user()->id;
-        
-        // 最後のブロードキャスティングルームを取得
-        $broadcastingRoom = BroadcastingRoom::where('user_id', $userId)
-            ->orderBy('created_at', 'desc') // created_atで降順にソート
-            ->first();
+        if (!$broadcastingRoomId) {
+            return response()->json(['error' => 'broadcastingRoomId is required'], 400);
+        }
     
-        if ($broadcastingRoom) {
-            $roomId = $broadcastingRoom->id;
-            $containerId = $broadcastingRoom->container_id;
+        // Redis から情報を取得
+        $broadcastData = Redis::hgetall("broadcast:{$broadcastingRoomId}");
     
-            try {
-                // コンテナのログを取得
-                $containerLog = $this->getContainerLog($containerId);
+        if (empty($broadcastData)) {
+            Log::warning("No broadcast data found in Redis for room ID: $broadcastingRoomId");
+            return response()->json(['error' => 'No broadcast data found.'], 404);
+        }
+    
+        $containerId = $broadcastData['containerId'];
+        $userIdFromRedis = $broadcastData['userId']; // Redisに保存されていれば
 
-                // コンテナログをデータベースに更新
-                DB::table('container_logs')->where('user_id', $userId)->update(['container_log' => $containerLog['containerLog']]);
+        // 悪意のあるユーザーが違うユーザーのコンテンツを止めようとしている場合
+        if ($userId != $userIdFromRedis) {
+            Log::warning("User ID mismatch for room ID: $broadcastingRoomId");
+            return response()->json(['error' => 'この配信をログアウトさせることはできません。'], 400);
+        }
 
-                // ブロードキャスティングルームのフラグを更新
-                DB::table('broadcasting_rooms')->where('id', $roomId)->update(['broadcasting_flag' => '0']);
-
-                // コンテナを停止
-                $this->stopContainerOfUser($containerId);
-
-                Log::info("Broadcast stopped successfully for user ID: $userId, Room ID: $roomId");
-
-                return response()->json(['message' => 'Broadcast stopped successfully.']);
-            } catch (\Exception $e) {
-                Log::error("Error stopping broadcast for user ID: $userId, Room ID: $roomId - " . $e->getMessage());
-                return response()->json(['error' => 'Failed to stop broadcast.'], 500);
+        try {
+            // コンテナログを取得して DB に保存
+            $containerLog = $this->getContainerLog($containerId);
+            DB::table('container_logs')->where('user_id', $userId)->update([
+                'container_log' => $containerLog['containerLog']
+            ]);
+    
+            // broadcasting_flag を無効に
+            DB::table('broadcasting_rooms')->where('id', $broadcastingRoomId)->update([
+                'broadcasting_flag' => '0'
+            ]);
+    
+            // コンテナ停止
+            $this->stopContainerOfUser($containerId);
+    
+            // Redis のデータを削除（任意）
+            Redis::del("broadcast:{$broadcastingRoomId}");
+            Redis::del("user_broadcast:{$userId}");
+    
+            Log::info("Broadcast stopped successfully for Room ID: $broadcastingRoomId");
+            if ($unmountFlag) {
+                return redirect(RouteServiceProvider::HOME);
             }
-        } else {
-            Log::warning("No broadcasting room found for user ID: $userId");
-            return response()->json(['error' => 'No broadcasting room found.'], 404);
+            return response()->json(['message' => 'Broadcast stopped successfully.']);
+        } catch (\Exception $e) {
+            Log::error("Failed to stop broadcast for Room ID: $broadcastingRoomId - " . $e->getMessage());
+            return response()->json(['error' => 'Failed to stop broadcast.'], 500);
         }
     }
+    
 
     private function stopContainerOfUser($containerId)
     {
@@ -199,16 +216,16 @@ class BroadcastingService
 
     private function findAlreadyActiveRoom($userId)
     {
+        $activeRoomOfUser = BroadcastingRoom::where(['user_id' => $userId, 'broadcasting_flag' => 1])->first();
+        $broadcastingRoomId;
         if ($activeRoomOfUser != null) {
             // JSON形式のデータをデコード
-            $activeRoomOfUser = BroadcastingRoom::where(['user_id' => $userId, 'broadcasting_flag' => 1])->first();
-
-            if ($activeRoomOfUser == null) {
-                return null; // ルームが存在しない場合はnullを返す
-            }
-
-            // idを取得
+                    // idを取得
             $broadcastingRoomId = $activeRoomOfUser->id;
+
+        }
+        if ($activeRoomOfUser == null) {
+            return null; // ルームが存在しない場合はnullを返す
         }
 
         return $broadcastingRoomId;

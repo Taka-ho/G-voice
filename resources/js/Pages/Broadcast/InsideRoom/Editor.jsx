@@ -1,28 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import MonacoEditor from 'react-monaco-editor';
+import EditorOfCode from '@monaco-editor/react';
 import './css/Editor.css';
 import './css/Tab.css';
-import NavigationModal from './Alert/NavigationModal'
-import UseNavigationConfirmation from './Alert/UseNavigationConfirmation'
+import { useParams } from 'react-router-dom';
+
 const Editor = ({ selectedFiles, updateFileContents }) => {
   const [fileNames, setFileNames] = useState([]);
   const [fileContents, setFileContents] = useState({});
   const [selectedFileName, setSelectedFileName] = useState('');
   const [fileIds, setFileIds] = useState({});
-  const [shouldBlock, setShouldBlock] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-
-  const { confirmNavigation, cancelNavigation } = UseNavigationConfirmation(
-    shouldBlock,
-    showModal,
-    setShowModal
-  );
-
-  useEffect(() => {
-    setTimeout(() => setShowModal(true), 1000); // 1秒後に表示
-  }, []);
+  const { broadcastingRoomId } = useParams();
   
+    useEffect(() => {
+      const notifySessionEnd = () => {
+        fetch('/broadcast/down', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            reason: 'unmount',
+            timestamp: new Date().toISOString(),
+            broadcastingRoomId: broadcastingRoomId,
+          }),
+        })
+      };
+  
+      window.addEventListener('beforeunload', notifySessionEnd);
+  
+      return () => {
+        notifySessionEnd();
+        window.removeEventListener('beforeunload', notifySessionEnd);
+      };
+    }, [broadcastingRoomId]);
+    
+
   // Sync selected files with Editor
   useEffect(() => {
     if (selectedFiles.length === 0) return;
@@ -99,11 +114,6 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
 
   return (
     <div className="editor-container">
-      <NavigationModal
-        show={showModal}
-        onConfirm={confirmNavigation}
-        onCancel={cancelNavigation}
-      />
       <Tabs onSelect={handleTabSelect}>
         <TabList>
           {fileNames.map((fileName) => (
@@ -113,11 +123,11 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
         {fileNames.map((fileName) => (
           <TabPanel key={fileName}>
             <div className="editor-space">
-              <MonacoEditor
+              <EditorOfCode
                 language="javascript"
                 theme="vs"
                 value={fileContents[fileName]}
-                onChange={(newValue) => handleOnChange(newValue, fileName)}
+                onChange={(value) => handleOnChange(value, fileName)}
               />
             </div>
           </TabPanel>
