@@ -1,17 +1,24 @@
 import React from 'react';
 import '../css/Header.css';
+import { useParams } from 'react-router-dom';
 
 const Header = ({ isMicOn, toggleMic, isBroadcasting, toggleBroadcast, isSharing, toggleShare }) => {
+  const { broadcastingRoomId } = useParams();
   const handleEndBroadcast = () => {
     return new Promise((resolve, reject) => {
       if (window.confirm('配信を終了しますか？')) {
-        fetch('http://localhost/downBroadcast', {
-          method: 'GET',
+        fetch('/broadcast/down', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
           },
+          credentials: 'include',
+          body: JSON.stringify({
+            reason: 'unmount',
+            timestamp: new Date().toISOString(),
+            broadcastingRoomId: broadcastingRoomId,
+          }),
         })
           .then((response) => {
             if (!response.ok) {

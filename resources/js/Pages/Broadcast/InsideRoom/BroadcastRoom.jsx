@@ -8,8 +8,6 @@ import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
 import Header from './Header/Header'; 
-import ConfirmationAlert from './Alert/ConfirmationAlert'; // 新しいコンポーネントをインポート
-import UseNavigationConfirmation from './Alert/UseNavigationConfirmation';
 import './css/Editor.css';
 
 const usePusherComments = () => {
@@ -39,7 +37,7 @@ const usePusherComments = () => {
   return pusherComments;
 };
 
-const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndContents }) => {
+const BroadcastRoom = ({ comments, addComment, fileAndContents, updateFileContents }) => {
   const [fileNames, setFileNames] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
@@ -52,38 +50,7 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
 
   const toggleMic = () => setMicOn(!isMicOn);
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
-  const toggleShare = () => setSharing(!isSharing);
-
-  // フォームがダーティな場合に確認を有効にする
-  const shouldConfirm = isFormDirty;
-
-  // 戻る（履歴移動）時にカスタムダイアログを表示
-  UseNavigationConfirmation(shouldConfirm, setShowAlert);
-
-  // リロードと戻るの検知
-  useEffect(() => {
-    const handleBeforeUnload = (event) => {
-      if (isFormDirty) {
-        const confirmationMessage = "変更が失われる可能性があります。配信を終了しますか？";
-        event.returnValue = confirmationMessage; // Chrome用
-        return confirmationMessage; // Firefox用
-      }
-    };
-
-    const handlePopState = () => {
-      if (isFormDirty) {
-        setShowAlert(true);
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState); // 履歴移動を検知
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState); // クリーンアップ
-    };
-  }, [isFormDirty]);
+  const toggleShare = () => setSharing(!isSharing);  
 
   return (
     <div className='all-space'>
