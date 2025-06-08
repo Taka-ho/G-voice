@@ -30,7 +30,9 @@ services:
             - watch-prj
             - file-in-container
     watch-prj:
-        image: watch-prj:latest
+        build:
+            context: ./websocket-app/watch-prj
+            dockerfile: watch-prj.Dockerfile
         ports:
             - '3000:3000'
             - '8080:8080'
@@ -42,9 +44,10 @@ services:
         networks:
             - sail
             - websocket_network
-            - redis_network # Redisネットワークを追加
+            - redis_network
         depends_on:
             - mysql
+            - redis
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -103,6 +106,7 @@ services:
         networks:
             - sail
             - redis_network # Redis専用ネットワーク
+            - websocket_network
 networks:
     sail:
         driver: bridge

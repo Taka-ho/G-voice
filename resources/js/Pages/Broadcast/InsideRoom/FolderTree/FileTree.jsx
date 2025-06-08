@@ -3,7 +3,7 @@ import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
 import { useParams } from 'react-router-dom';
 
-const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
+const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents }) => {
   const [treeData, setTreeData] = useState(() => {
     const storedTreeData = localStorage.getItem('treeData');
     return storedTreeData
@@ -21,9 +21,13 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
   const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
   const [currentItemName, setCurrentItemName] = useState(''); // 現在のアイテム名を管理
   const { broadcastingRoomId } = useParams();
+
   useEffect(() => {
+    console.log(fileAndContents);
+    console.log(treeData);
     const ws = new WebSocket('ws://localhost:8080');
-    const queryString = window.location.search;
+
+    console.log(broadcastingRoomId);
     ws.onopen = () => {
       const message = JSON.stringify({ broadcastingRoomId, treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
       ws.send(message);
@@ -66,13 +70,17 @@ const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents
 
   const clickedFile = (clickedFile) => {
     if (!clickedFile.children) {
+      console.log(clickedFile.name);
       const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
       if (!fileNames.some((file) => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        updateFileContents(openedFile.name, fileAndContents[openedFile.name] || '');
+  
+        const content = fileAndContents?.[openedFile.name] ?? ''; // ←安全にアクセス
+        updateFileContents(openedFile.name, content);
       }
     }
   };
+  
 
   const handleFileDeleted = (node) => {
     const pathOfDeleteFile = node.path; // node.pathを取得
