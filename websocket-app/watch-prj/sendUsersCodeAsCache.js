@@ -6,7 +6,7 @@ const redis = new Redis({
     port: 6379,    // Redisのデフォルトポート
 });
 
-const deadlineOfCacheObject = 600; // 有効期限（秒）
+const deadlineOfCacheObject = 6000; // 有効期限（秒）
 
 // データを構造化する関数
 const structJsonData = (containerId, treeData, fileAndContents) => {
@@ -59,7 +59,7 @@ const updateExpirationFlags = async (dataArray) => {
     let flagUpdated = false;
     for (const entry of dataArray) {
         const createdAt = new Date(entry.createdAt);
-        const timeDiff = (now - createdAt) / 1000; // 秒単位の差分
+        const timeDiff = (now - createdAt) / 1; // 秒単位の差分
 
         // deadlineOfCacheObject秒経過した場合はフラグを1に設定
         if (timeDiff >= deadlineOfCacheObject) {

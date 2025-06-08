@@ -5,7 +5,7 @@ import './css/Editor.css';
 import './css/Tab.css';
 import { useParams } from 'react-router-dom';
 
-const Editor = ({ selectedFiles, updateFileContents }) => {
+const Editor = ({ selectedFiles, updateFileContents, updateSelectedFileName }) => {
   const [fileNames, setFileNames] = useState([]);
   const [fileContents, setFileContents] = useState({});
   const [selectedFileName, setSelectedFileName] = useState('');

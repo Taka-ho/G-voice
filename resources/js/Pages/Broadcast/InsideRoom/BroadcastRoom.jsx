@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import FileTree from './FolderTree/FileTree';
 import AudioStreamer from './Header/AudioStreamer';
@@ -9,7 +9,7 @@ import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
 import Header from './Header/Header'; 
 import './css/Editor.css';
-
+import { useAppData } from '.././Contexts/AppDataContext';
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
 
@@ -37,7 +37,7 @@ const usePusherComments = () => {
   return pusherComments;
 };
 
-const BroadcastRoom = ({ comments, addComment, fileAndContents, updateFileContents }) => {
+const BroadcastRoom = ({ }) => {
   const [fileNames, setFileNames] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
@@ -50,7 +50,8 @@ const BroadcastRoom = ({ comments, addComment, fileAndContents, updateFileConten
 
   const toggleMic = () => setMicOn(!isMicOn);
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
-  const toggleShare = () => setSharing(!isSharing);  
+  const toggleShare = () => setSharing(!isSharing);
+  const { fileAndContents, updateFileContents, comments, addComment } = useAppData();
 
   return (
     <div className='all-space'>

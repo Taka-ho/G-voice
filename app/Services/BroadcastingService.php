@@ -54,8 +54,8 @@ class BroadcastingService
             'user_id' => $userId,
             'broadcasting_id' => $broadcastingRoomId,
             'container_id' => $containerId,
-            'tree_data' => null,
-            'file_and_contents' => null,
+            'tree_data' => '{"id":1,"name":"root","path":"root","children":[{"id":1,"name":"test.js","content":"","path":"/root/test.js"}]}',
+            'file_and_contents' => '{"1":{"name":"test.js","content":""}}',
             'created_at' => $startOfBroadcast,
         ]);
 

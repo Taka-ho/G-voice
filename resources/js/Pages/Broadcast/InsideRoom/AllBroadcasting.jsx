@@ -3,8 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import BroadcastRoom from './BroadcastRoom';
 import ViewerDashboard from './Audience/ViewerDashboard';
 import Pusher from 'pusher-js';
-
-const AppDataContext = createContext(null);
+import { AppDataContext } from '.././Contexts/AppDataContext';
 
 export const useAppData = () => {
   const context = useContext(AppDataContext);
@@ -90,11 +89,11 @@ const ParentComponent = () => {
   };
 
   return (
-    <RouterProvider router={router}>
-      <AppDataContext.Provider value={{ comments, addComment, fileAndContents, updateFileContents }}>
-      </AppDataContext.Provider>
-    </RouterProvider>
+    <AppDataContext.Provider value={{ comments, addComment, fileAndContents, updateFileContents }}>
+      <RouterProvider router={router} />
+    </AppDataContext.Provider>
   );
+  
 };
 
 export default ParentComponent;
