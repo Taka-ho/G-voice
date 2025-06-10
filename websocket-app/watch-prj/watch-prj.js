@@ -6,53 +6,79 @@ import sendTargetCacheObject from './sendUsersCodeAsCache.js';
 
 const app = express();
 const port = 3000;
-
-// Redis クライアント作成（必要に応じてホスト・ポートを指定）
-const redis = new Redis({ host: 'redis', port: 6379 }); // 例: new Redis({ host: 'redis', port: 6379 })
-
+const redis = new Redis({ host: 'redis', port: 6379 });
 app.use(express.json());
 
 const wss = new WebSocketServer({ port: 8080 });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   ws.on('message', async (message) => {
-    const parsedMessage = JSON.parse(message);
+    let parsedMessage;
+
+    try {
+      parsedMessage = JSON.parse(message);
+    } catch (err) {
+      ws.send(JSON.stringify({ status: 'error', message: 'Invalid JSON format.' }));
+      ws.close();
+      return;
+    }
+
     const {
       broadcastingRoomId,
       treeData,
       fileAndContents,
       pathBeforeChange,
       pathAfterChange,
-      pathOfDeleteFile
+      pathOfDeleteFile,
+      token // Laravel SanctumのBearerトークン
     } = parsedMessage;
 
-    // ===== RedisからcontainerId取得（最優先で実行） =====
-    let containerId;
-    (async () => {
-      const test = await redis.hgetall(`g_voice_database_broadcast:${broadcastingRoomId}`);
-      console.log('Redisから取得:', test);
-    })();
-    try {
-      const key = `g_voice_database_broadcast:${broadcastingRoomId}`;
-      const redisData = await redis.hgetall(key);
-      console.log('Redisから取得したデータ:', redisData);
-      if (!redisData || !redisData.containerId) {
-        console.log(JSON.stringify({ status: "error", message: "RedisからcontainerIdが取得できませんでした。" }));
-        return;
-      }
+    let userIdFromToken = null;
 
-      containerId = redisData.containerId;
-      console.log('取得した containerId:', containerId); // ✅ ログ出力（必ず出る）
-    } catch (error) {
-      console.error('Redisエラー:', error);
-      ws.send(JSON.stringify({ status: "error", message: "Redisからデータ取得中にエラーが発生しました。" }));
+    try {
+      const authResponse = await axios.get('http://sail/api/auth-check', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      userIdFromToken = authResponse.data.user_id;
+    } catch (err) {
+      ws.send(JSON.stringify({ status: 'error', message: 'Authentication failed.' }));
+      ws.close();
       return;
     }
 
-    // ================== 関数 ==================
+    try {
+      const ownerResponse = await axios.get(`http://sail/api/room-owner-check/${broadcastingRoomId}`);
+      const roomOwnerId = ownerResponse.data.user_id;
 
+      if (roomOwnerId !== userIdFromToken) {
+        ws.send(JSON.stringify({ status: 'error', message: 'You are not the owner of this room.' }));
+        ws.close();
+        return;
+      }
+    } catch (err) {
+      ws.send(JSON.stringify({ status: 'error', message: 'Room owner check failed.' }));
+      ws.close();
+      return;
+    }
+
+    let containerId;
+    try {
+      const key = `g_voice_database_broadcast:${broadcastingRoomId}`;
+      const redisData = await redis.hgetall(key);
+      if (!redisData || !redisData.containerId) {
+        ws.send(JSON.stringify({ status: "error", message: "RedisからcontainerIdが取得できませんでした。" }));
+        return;
+      }
+      containerId = redisData.containerId;
+    } catch (error) {
+      ws.send(JSON.stringify({ status: "error", message: "Redisからの取得中にエラーが発生しました。" }));
+      return;
+    }
+
+    // ================== Docker操作関数 ==================
     const execCommand = async (containerId, cmd) => {
-      console.log('execCommand 内の containerId:', containerId); // ✅ ログ出力
       const baseURL = 'http://host.docker.internal:2375';
       const execCreateResponse = await axios.post(`${baseURL}/containers/${containerId}/exec`, {
         AttachStdout: true,
@@ -81,13 +107,11 @@ wss.on('connection', (ws) => {
     };
 
     const moveFile = async (containerId, oldPath, newPath) => {
-      console.log('moveFile 内の containerId:', containerId); // ✅ ログ出力
       const command = ['mv', oldPath, newPath];
       return execCommand(containerId, command);
     };
 
     const createOrUpdateStructure = async (node, path = '/root') => {
-      console.log('createOrUpdateStructure 内の containerId:', containerId); // ✅ ログ出力
       const sanitizedFileName = sanitizeName(node.name);
       const currentPath = `${path}/${sanitizedFileName}`;
 
@@ -113,8 +137,7 @@ wss.on('connection', (ws) => {
       }
     };
 
-    // ================== 実処理 ==================
-
+    // ================== ロジック系 ==================
     const sanitizeName = (name) => name.replace(/\s+/g, '');
 
     const applyContentsToTree = (node) => {
@@ -130,7 +153,6 @@ wss.on('connection', (ws) => {
 
     const sendToDB = async (cachedData) => {
       try {
-        console.log(treeData);
         const response = await axios.post('http://sail/api/insertUsersCode', {
           data: cachedData
         });
@@ -141,13 +163,13 @@ wss.on('connection', (ws) => {
       }
     };
 
+    // ================== 実処理 ==================
     try {
       const cachedData = await sendTargetCacheObject.cacheData(containerId, treeData, fileAndContents);
       if (cachedData) {
         await sendToDB(cachedData);
       }
     } catch (error) {
-      console.error('キャッシュ処理エラー:', error);
       ws.send(JSON.stringify({ status: "error", message: "データのキャッシュ中にエラーが発生しました。" }));
     }
 

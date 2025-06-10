@@ -78,7 +78,9 @@ services:
         depends_on:
             - mysql
     command:
-        image: command:latest
+        build:
+            context: ./websocket-app/command
+            dockerfile: command.Dockerfile
         ports:
             - '3030:3030'
             - '7070:7070'
@@ -105,8 +107,13 @@ services:
             - '6379:6379'
         networks:
             - sail
-            - redis_network # Redis専用ネットワーク
+            - redis_network
             - websocket_network
+        volumes:
+            - redis-data:/data
+            - '.:/var/www/html'
+            - /var/run/docker.sock:/var/run/docker.sock
+
 networks:
     sail:
         driver: bridge
@@ -118,4 +125,6 @@ volumes:
     sail-mysql:
         driver: local
     sail-redis:
+        driver: local
+    redis-data:
         driver: local

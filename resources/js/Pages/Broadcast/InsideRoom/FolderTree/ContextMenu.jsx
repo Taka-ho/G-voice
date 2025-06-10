@@ -68,7 +68,6 @@ const ContextMenu = ({
     const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
       ? `${parentNode.path}/NewFile.txt`
       : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFile.txt`;
-    console.log(path);
     const newFile = { id: Date.now(), name: 'NewFile.txt', content: '', path: path };
     const updatedNode = {
       ...parentNode,
@@ -84,7 +83,6 @@ const ContextMenu = ({
     const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
       ? `${parentNode.path}/NewFolder`
       : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFolder`;
-    console.log(path);
     const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: path };
     const updatedNode = {
       ...parentNode,

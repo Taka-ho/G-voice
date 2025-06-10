@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import FileTree from './FolderTree/FileTree';
 import AudioStreamer from './Header/AudioStreamer';
@@ -10,6 +10,7 @@ import Pusher from 'pusher-js';
 import Header from './Header/Header'; 
 import './css/Editor.css';
 import { useAppData } from '.././Contexts/AppDataContext';
+
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
 
@@ -52,6 +53,28 @@ const BroadcastRoom = ({ }) => {
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
   const toggleShare = () => setSharing(!isSharing);
   const { fileAndContents, updateFileContents, comments, addComment } = useAppData();
+  
+  const BroadcastRoom = () => {
+    const { treeData } = useAppData();
+    const socketRef = useRef(null);
+  
+    useEffect(() => {
+      if (
+        socketRef.current &&
+        socketRef.current.readyState === WebSocket.OPEN &&
+        treeData
+      ) {
+        socketRef.current.send(
+          JSON.stringify({
+            type: 'update_tree',
+            data: treeData,
+          })
+        );
+      }
+    }, [treeData]);
+  
+    return <div className="broadcast-room">{/* your components here */}</div>;
+  };
 
   return (
     <div className='all-space'>

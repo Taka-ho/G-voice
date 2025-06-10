@@ -1,0 +1,4 @@
+.all-space {
+    display: flex;
+    flex-direction: column;
+}

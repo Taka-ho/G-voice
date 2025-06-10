@@ -1,39 +1,27 @@
-import React, { useEffect, useState, createContext, useContext } from 'react';
+import React, { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import BroadcastRoom from './BroadcastRoom';
 import ViewerDashboard from './Audience/ViewerDashboard';
 import Pusher from 'pusher-js';
-import { AppDataContext } from '.././Contexts/AppDataContext';
+import { useAppData } from '../Contexts/AppDataContext';
 
-export const useAppData = () => {
-  const context = useContext(AppDataContext);
-  if (context === null) {
-    throw new Error('useAppData must be used within an AppDataProvider');
-  }
-  return context;
-};
+const AllBroadcasting = () => {
+  // コンテキストからコメント関連を取得
+  const { comments, addComment, setComments } = useAppData();
 
-const ParentComponent = () => {
-  const [comments, setComments] = useState([]);
-  const [fileAndContents, setFileAndContents] = useState({});
   useEffect(() => {
-    fetch('/api/comments')
-      .then((response) => response.json())
-      .then((data) => {
-        setComments(data);
-      });
-
+    // Pusherセットアップ
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
-      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1'
+      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1',
     });
 
     const channel = pusher.subscribe('comment');
-    channel.bind('SentComment', function (newComment) {
-      setComments(prevComments => [...prevComments, newComment]);
+    channel.bind('SentComment', (newComment) => {
+      setComments(prev => [...prev, newComment]);
     });
 
     const endChannel = pusher.subscribe('broadcast');
-    endChannel.bind('EndBroadcast', function () {
+    endChannel.bind('EndBroadcast', () => {
       window.location.href = '/';
     });
 
@@ -43,57 +31,23 @@ const ParentComponent = () => {
       endChannel.unbind_all();
       endChannel.unsubscribe();
     };
+  }, [setComments]);
 
-  }, []);
-
-  const addComment = (newComment) => {
-    const commentWithId = { ...newComment };
-
-    fetch('/api/comments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-      },
-      credentials: 'include',
-      body: JSON.stringify(commentWithId),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setComments(prevComments => [...prevComments, data]);
-      });
-  };
-
-  // データルーターを作成
+  // ルーター定義
   const router = createBrowserRouter([
     {
-      path: "/broadcast/:broadcastingRoomId",
+      path: '/broadcast/:broadcastingRoomId',
       element: <BroadcastRoom />,
     },
     {
-      path: "/broadcast/stream/:broadcastingRoomId",
+      path: '/broadcast/stream/:broadcastingRoomId',
       element: <ViewerDashboard />,
     },
-    // 他のルート定義を追加
   ]);
 
-  const updateFileContents = (fileId, fileName, newContent) => {
-    setFileAndContents(prevContents => ({
-      ...prevContents,
-      [fileId]: {
-        name: fileName,
-        content: newContent
-      }
-    }));
-  };
-
   return (
-    <AppDataContext.Provider value={{ comments, addComment, fileAndContents, updateFileContents }}>
-      <RouterProvider router={router} />
-    </AppDataContext.Provider>
+    <RouterProvider router={router} />
   );
-  
 };
 
-export default ParentComponent;
+export default AllBroadcasting;

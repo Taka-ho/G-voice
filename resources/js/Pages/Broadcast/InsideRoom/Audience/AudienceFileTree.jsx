@@ -1,30 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import ContextMenu from './ContextMenu';
 import '../css/FileTree.scss';
 import { useParams } from 'react-router-dom';
-import { useAppData } from '../../Contexts/AppDataContext';
 
-const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents }) => {
-  const { treeData, setTreeData } = useAppData(); // Contextから取得
+const AudienceFileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents }) => {
+  const [treeData, setTreeData] = useState(() => {
+    const storedTreeData = localStorage.getItem('treeData');
+    return storedTreeData
+      ? JSON.parse(storedTreeData)
+      : {
+          id: 1,
+          name: 'root',
+          path: 'root',
+          children: [],
+        };
+  });
+
   const [pathBeforeChange, setPathBeforeChange] = useState('');
   const [pathAfterChange, setPathAfterChange] = useState('');
   const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
-  const [currentItemName, setCurrentItemName] = useState('');
+  const [currentItemName, setCurrentItemName] = useState(''); // 現在のアイテム名を管理
   const { broadcastingRoomId } = useParams();
-  console.log(fileAndContents);
-  useEffect(() => {
-    if (!treeData) return;
 
+  useEffect(() => {
+    console.log(fileAndContents);
+    console.log(treeData);
     const ws = new WebSocket('ws://localhost:8080');
+
+    console.log(broadcastingRoomId);
     ws.onopen = () => {
-      const message = JSON.stringify({
-        broadcastingRoomId,
-        treeData,
-        fileAndContents,
-        pathBeforeChange,
-        pathAfterChange,
-        pathOfDeleteFile,
-      });
+      const message = JSON.stringify({ broadcastingRoomId, treeData, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
       ws.send(message);
     };
 
@@ -45,12 +49,18 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents
   }, [treeData, fileAndContents]);
 
   const deleteNodeById = (node, id) => {
-    if (node.id === id) return null;
+    if (node.id === id) {
+      return null;
+    }
 
     if (node.children && node.children.length > 0) {
       const updatedChildren = node.children
-        .map((child) => deleteNodeById(child, id))
+        .map((child) => {
+          const updatedChild = deleteNodeById(child, id);
+          return updatedChild !== null ? updatedChild : null;
+        })
         .filter((child) => child !== null);
+
       return { ...node, children: updatedChildren };
     }
 
@@ -59,32 +69,35 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents
 
   const clickedFile = (clickedFile) => {
     if (!clickedFile.children) {
-      const openedFile = {
-        id: clickedFile.id,
-        name: clickedFile.name,
-        path: clickedFile.path,
-      };
-
+      console.log(clickedFile.name);
+      const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
       if (!fileNames.some((file) => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        const content = fileAndContents?.[openedFile.name] ?? '';
+  
+        const content = fileAndContents?.[openedFile.name] ?? ''; // ←安全にアクセス
         updateFileContents(openedFile.name, content);
       }
     }
   };
+  
 
   const handleFileDeleted = (node) => {
-    const path = node.path;
-    setPathOfDeleteFile(path);
-    const updatedTree = deleteNodeById(treeData, node.id);
-    if (updatedTree) setTreeData(updatedTree);
+    const pathOfDeleteFile = node.path; // node.pathを取得
+    setPathOfDeleteFile(pathOfDeleteFile); // pathOfDeleteFileをセット
+    const updatedTreeData = deleteNodeById(treeData, node.id);
+    if (updatedTreeData) {
+      setTreeData(updatedTreeData);
+      localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
+    }
 
+    // WebSocketを使用して削除処理を送信
     const ws = new WebSocket('ws://localhost:8080');
     ws.onopen = () => {
-      const message = JSON.stringify({ action: 'delete', path });
+      const message = JSON.stringify({ action: 'delete', path: pathOfDeleteFile });
       ws.send(message);
     };
 
+    // pathOfDeleteFileを空に戻す
     setPathOfDeleteFile('');
   };
 
@@ -99,28 +112,26 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents
       }
 
       if (node.children && node.children.length > 0) {
-        const updatedChildren = node.children.map((child) =>
-          updateNode(child, updatedNode)
-        );
+        const updatedChildren = node.children.map((child) => updateNode(child, updatedNode));
         return { ...node, children: updatedChildren };
       }
-
       return node;
     };
 
-    setTreeData((prevTreeData) => updateNode(prevTreeData, updatedNode));
+    setTreeData((prevTreeData) => {
+      const updatedTree = updateNode(prevTreeData, updatedNode);
+      localStorage.setItem('treeData', JSON.stringify(updatedTree));
+      return updatedTree;
+    });
   };
 
   const renderTree = (node) => {
     return (
       <li key={node.id}>
-        <div
-          onClick={() => clickedFile(node)}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            setCurrentItemName(node.name);
-          }}
-        >
+        <div onClick={() => clickedFile(node)} onContextMenu={(e) => {
+          e.preventDefault();
+          setCurrentItemName(node.name); // コンテキストメニューのためにアイテム名を設定
+        }}>
           {node.name} {node.children ? (node.isOpen ? '-' : '+') : null}
         </div>
         {node.isOpen && node.children && node.children.length > 0 && (
@@ -132,29 +143,12 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents, fileAndContents
     );
   };
 
-  if (!treeData) return <div>Loading tree...</div>; // null安全チェック
-
   return (
     <div style={{ display: 'flex-grow' }}>
       <div style={{ marginRight: '1rem' }}>
-        <ul>
-          <ContextMenu
-            data={treeData}
-            indent={0}
-            onDelete={handleFileDeleted}
-            onClick={clickedFile}
-            onFileRenamed={handleFileRenamed}
-            setTreeData={setTreeData}
-            pathBeforeChange={pathBeforeChange}
-            pathAfterChange={pathAfterChange}
-            setPathBeforeChange={setPathBeforeChange}
-            setPathAfterChange={setPathAfterChange}
-            setPathOfDeleteFile={setPathOfDeleteFile}
-          />
-        </ul>
       </div>
     </div>
   );
 };
 
-export default FileTree;
+export default AudienceFileTree;
