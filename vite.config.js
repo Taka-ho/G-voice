@@ -21,5 +21,17 @@ export default async ({ command }) => {
         refresh: true,
       }),
     ],
+    optimizeDeps: {
+      include: ['monaco-editor/esm/vs/editor/editor.api']
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'monaco-editor': ['monaco-editor']
+          }
+        }
+      }
+    }
   });
 };

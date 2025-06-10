@@ -1,6 +1,8 @@
 import CommentList from "../Comment/CommentList";
 import CommentForm from "../Comment/CommentForm";
-
+import AudienceFileTree from "./AudienceFileTree";
+import AudienceTerminal from "./AudienceTerminal";
+import AudienceEditor from "./AudienceEditor";
 import { Head, useState, useEffect } from 'react';
 import Pusher from 'pusher-js';
 
@@ -34,19 +36,19 @@ const ViewerDashboard = ({ comments, addComment }) => {
       <div className='all-space'>
         <Head title="視聴部屋" />
         <div style={{ display: 'flex', flex: 1 }}>
-          <FileTree
+          <AudienceFileTree
             fileNames={fileNames}
             setFileNames={setFileNames}
             fileAndContents={fileAndContents}
             updateFileContents={updateFileContents}
           />
           <div className='Editor' style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Editor
+            <AudienceEditor
               selectedFiles={fileNames}
               updateFileContents={updateFileContents}
               updateSelectedFileName={setSelectedFileName}
             />
-            <TerminalComponent />
+            <AudienceTerminal />
           </div>
           <div className="comment-section">
             <CommentList pusherComments={pusherComments} comments={comments} />

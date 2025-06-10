@@ -29,3 +29,17 @@ Route::middleware(['auth:sanctum'])->group(function(){
 Route::post('/insertUsersCode', [BroadcastController::class, 'insertUsersCode']);
 Route::get('/roomsList', [BroadcastController::class, 'RoomsList'])->name('broadcast.RoomsList');
 
+Route::middleware('auth:sanctum')->get('/auth-check', function (Request $request) {
+    return response()->json([
+        'authenticated' => true,
+        'user_id' => $request->user()->id,
+        'email' => $request->user()->email,
+    ]);
+});
+
+Route::get('/room-owner-check/{broadcastingRoomId}', function ($broadcastingRoomId) {
+    $room = \App\Models\BroadcastingRoom::find($broadcastingRoomId);
+    return response()->json([
+        'user_id' => $room->user_id ?? null
+    ]);
+});

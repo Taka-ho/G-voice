@@ -11,7 +11,30 @@ const wss = new WebSocketServer({ port: 7070 });
 
 wss.on('connection', (ws) => {
   ws.on('message', async (message) => {
-    const { command, containerId } = JSON.parse(message);
+    const { command } = JSON.parse(message);
+
+    // ===== RedisからcontainerId取得（最優先で実行） =====
+    let containerId;
+    (async () => {
+      const test = await redis.hgetall(`g_voice_database_broadcast:${broadcastingRoomId}`);
+      console.log('Redisから取得:', test);
+    })();
+    try {
+      const key = `g_voice_database_broadcast:${broadcastingRoomId}`;
+      const redisData = await redis.hgetall(key);
+      console.log('Redisから取得したデータ:', redisData);
+      if (!redisData || !redisData.containerId) {
+        console.log(JSON.stringify({ status: "error", message: "RedisからcontainerIdが取得できませんでした。" }));
+        return;
+      }
+
+      containerId = redisData.containerId;
+    } catch (error) {
+      console.error('Redisエラー:', error);
+      ws.send(JSON.stringify({ status: "error", message: "Redisからデータ取得中にエラーが発生しました。" }));
+      return;
+    }
+
     const baseURL = 'http://localhost:2375';
     console.log(`Executing command: ${command}`);    
     if (!command || !containerId) {

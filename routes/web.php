@@ -30,7 +30,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/broadcast/create', [BroadcastController::class, 'createRoom'])->name('broadcast.create');
     Route::get('/broadcast/{broadcastingRoomId}', [BroadcastController::class, 'BroadcastRoom'])->name('broadcast.insideRoom');
-    Route::get('/broadcast/stream/{id}', [BroadcastController::class, 'streamAudio']);    
+    Route::get('/broadcast/stream/{broadcastingRoomId}', [BroadcastController::class, 'streamAudio']);    
 
     Route::post('/broadcast/down', [BroadcastController::class, 'DownBroadcast'])->name('broadcast.DownBroadcast');
     Route::post('/broadcast/down/unmount', [BroadcastController::class, 'DownBroadcastFromUnmount'])->name('broadcast.DownBroadcastFromUnmount');

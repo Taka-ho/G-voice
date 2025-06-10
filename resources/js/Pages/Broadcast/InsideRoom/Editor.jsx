@@ -1,133 +1,106 @@
 import React, { useEffect, useState } from 'react';
+import MonacoEditor from '@monaco-editor/react';
+import { useAppData } from '../Contexts/AppDataContext';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import EditorOfCode from '@monaco-editor/react';
 import './css/Editor.css';
 import './css/Tab.css';
+import './css/CommentList.css';
+import './css/Terminal.css';
 import { useParams } from 'react-router-dom';
 
-const Editor = ({ selectedFiles, updateFileContents, updateSelectedFileName }) => {
-  const [fileNames, setFileNames] = useState([]);
-  const [fileContents, setFileContents] = useState({});
-  const [selectedFileName, setSelectedFileName] = useState('');
-  const [fileIds, setFileIds] = useState({});
+const Editor = ({ selectedFiles }) => {
+  const { fileContents, setFileContents } = useAppData();
+  const [selectedFileId, setSelectedFileId] = useState('');
+  const [fileIds, setFileIds] = useState([]);
   const { broadcastingRoomId } = useParams();
-  
-    useEffect(() => {
-      const notifySessionEnd = () => {
-        fetch('/broadcast/down', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            reason: 'unmount',
-            timestamp: new Date().toISOString(),
-            broadcastingRoomId: broadcastingRoomId,
-          }),
-        })
-      };
-  
-      window.addEventListener('beforeunload', notifySessionEnd);
-  
-      return () => {
-        notifySessionEnd();
-        window.removeEventListener('beforeunload', notifySessionEnd);
-      };
-    }, [broadcastingRoomId]);
-    
 
-  // Sync selected files with Editor
   useEffect(() => {
-    if (selectedFiles.length === 0) return;
+    const notifySessionEnd = () => {
+      fetch('/broadcast/down', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          reason: 'unmount',
+          timestamp: new Date().toISOString(),
+          broadcastingRoomId: broadcastingRoomId,
+        }),
+      });
+    };
 
-    const newFileNames = selectedFiles.map((file) => file.name);
-    setFileNames(newFileNames);
+    window.addEventListener('beforeunload', notifySessionEnd);
+    return () => {
+      notifySessionEnd();
+      window.removeEventListener('beforeunload', notifySessionEnd);
+    };
+  }, [broadcastingRoomId]);
 
-    const newFileContents = {};
-    const newFileIds = {};
-    selectedFiles.forEach((file) => {
-      if (!fileContents[file.name]) {
-        newFileContents[file.name] = file.content || '';
-      }
-      newFileIds[file.name] = file.id;
+  useEffect(() => {
+    if (!selectedFiles || selectedFiles.length === 0) return;
+
+    const newFileIds = selectedFiles.map(file => file.id);
+    setFileIds(newFileIds);
+
+    // 最初のファイルをデフォルトで選択
+    if (!selectedFileId && newFileIds.length > 0) {
+      setSelectedFileId(newFileIds[0]);
+    }
+
+    // fileContents にまだ登録されていないファイルを追加
+    setFileContents(prevContents => {
+      const updated = { ...prevContents };
+      selectedFiles.forEach(file => {
+        if (!(file.id in updated)) {
+          updated[file.id] = {
+            id: file.id,
+            name: file.name,
+            path: file.path,
+            content: file.content ?? '',
+          };
+        }
+      });
+      return updated;
     });
-    setFileContents((prevContents) => ({ ...prevContents, ...newFileContents }));
-    setFileIds((prevIds) => ({ ...prevIds, ...newFileIds }));
   }, [selectedFiles]);
 
-  const handleOnChange = (newValue, fileName) => {
-    setFileContents((prevContents) => {
-      const updatedContents = {
-        ...prevContents,
-        [fileName]: newValue,
-      };
-      const fileId = fileIds[fileName];
-      
-      // Save updated contents in localStorage
-      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
-      if (treeData && treeData.children) {
-        const fileToUpdate = treeData.children.find((file) => file.id === fileId);
-        if (fileToUpdate) {
-          fileToUpdate.content = newValue;
-          localStorage.setItem('treeData', JSON.stringify(treeData));
-        }
-      }
-
-      // Trigger a storage event to notify other components
-      const storageEvent = new Event('storage');
-      window.dispatchEvent(storageEvent);
-
-      // Update file contents in parent component
-      updateFileContents(fileId, fileName, newValue);
-
-      return updatedContents;
-    });
+  const handleOnChange = (newValue, fileId) => {
+    if (!fileId) return;
+    setFileContents(prevContents => ({
+      ...prevContents,
+      [fileId]: {
+        ...(prevContents[fileId] || {}),
+        content: newValue,
+      },
+    }));
   };
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const updatedTree = JSON.parse(localStorage.getItem('treeData') || '{}');
-  
-      if (updatedTree && updatedTree.children) {
-        const newFileNames = selectedFiles.map((file) => {
-          const updatedFile = updatedTree.children.find((item) => item.id === file.id);
-          return updatedFile ? updatedFile.name : file.name;
-        });
-
-        setFileNames(newFileNames);
-      }
-    };
-  
-    window.addEventListener('storage', handleStorageChange);
-  
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedFiles]);
-
-  // Handle tab select
   const handleTabSelect = (selectedIndex) => {
-    setSelectedFileName(fileNames[selectedIndex]);
+    const newSelectedId = fileIds[selectedIndex];
+    setSelectedFileId(newSelectedId);
   };
 
   return (
     <div className="editor-container">
-      <Tabs onSelect={handleTabSelect}>
+      <Tabs
+        onSelect={handleTabSelect}
+        selectedIndex={fileIds.indexOf(selectedFileId)}
+      >
         <TabList>
-          {fileNames.map((fileName) => (
-            <Tab key={fileName}>{fileName}</Tab>
+          {selectedFiles.map(file => (
+            <Tab key={file.id}>{file.name}</Tab>
           ))}
         </TabList>
-        {fileNames.map((fileName) => (
-          <TabPanel key={fileName}>
+        {selectedFiles.map(file => (
+          <TabPanel key={file.id}>
             <div className="editor-space">
-              <EditorOfCode
+              <MonacoEditor
+                value={fileContents[file.id]?.content ?? ''}
+                onChange={(value) => handleOnChange(value, file.id)}
                 language="javascript"
-                theme="vs"
-                value={fileContents[fileName]}
-                onChange={(value) => handleOnChange(value, fileName)}
+                options={{ fontSize: 14 }}
               />
             </div>
           </TabPanel>
