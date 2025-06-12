@@ -8,9 +8,6 @@ RUN apt-get update && \
 RUN locale-gen ja_JP.UTF-8 && \
     update-locale LANG=ja_JP.UTF-8
 
-# SSHサーバーの設定
-RUN mkdir /var/run/sshd
-
 # inotifywaitを永続的に実行するシェルスクリプトを作成
 RUN echo '#!/bin/bash\n\
 while inotifywait -r -e modify,create,delete /root; do \n\

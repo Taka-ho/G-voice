@@ -5,7 +5,6 @@ const useFileManager = ({ fileAndContents } = {}) => {
     if (!fileAndContents) return;
 
     const updateTreeDataFromFileAndContents = () => {
-      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
 
       if (!treeData || !Array.isArray(treeData.children)) return;
 
@@ -21,8 +20,6 @@ const useFileManager = ({ fileAndContents } = {}) => {
           return file;
         }),
       };
-
-      localStorage.setItem('treeData', JSON.stringify(updatedTree));
 
       const event = new CustomEvent('treeDataUpdated', { detail: updatedTree });
       window.dispatchEvent(event);

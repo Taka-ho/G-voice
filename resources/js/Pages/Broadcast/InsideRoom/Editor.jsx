@@ -6,37 +6,11 @@ import './css/Editor.css';
 import './css/Tab.css';
 import './css/CommentList.css';
 import './css/Terminal.css';
-import { useParams } from 'react-router-dom';
 
 const Editor = ({ selectedFiles }) => {
   const { fileContents, setFileContents } = useAppData();
   const [selectedFileId, setSelectedFileId] = useState('');
   const [fileIds, setFileIds] = useState([]);
-  const { broadcastingRoomId } = useParams();
-
-  useEffect(() => {
-    const notifySessionEnd = () => {
-      fetch('/broadcast/down', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          reason: 'unmount',
-          timestamp: new Date().toISOString(),
-          broadcastingRoomId: broadcastingRoomId,
-        }),
-      });
-    };
-
-    window.addEventListener('beforeunload', notifySessionEnd);
-    return () => {
-      notifySessionEnd();
-      window.removeEventListener('beforeunload', notifySessionEnd);
-    };
-  }, [broadcastingRoomId]);
 
   useEffect(() => {
     if (!selectedFiles || selectedFiles.length === 0) return;

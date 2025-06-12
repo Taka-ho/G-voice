@@ -1,19 +1,15 @@
-// FileManagerContext.jsx
 import React, { createContext, useContext, useEffect } from 'react';
 import { useAppData } from './AppDataContext';
 
 const FileManagerContext = createContext();
 
 export const FileManagerProvider = ({ children }) => {
-  const { fileContents } = useAppData();
+  const { fileContents, treeData } = useAppData();
 
   useEffect(() => {
-    if (!fileContents) return;
+    if (!fileContents || !treeData || !Array.isArray(treeData.children)) return;
 
     const updateTreeDataFromFileAndContents = () => {
-      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
-      if (!treeData || !Array.isArray(treeData.children)) return;
-
       const updatedTree = {
         ...treeData,
         children: treeData.children.map(file => {
@@ -27,12 +23,11 @@ export const FileManagerProvider = ({ children }) => {
         }),
       };
 
-      localStorage.setItem('treeData', JSON.stringify(updatedTree));
       window.dispatchEvent(new CustomEvent('treeDataUpdated', { detail: updatedTree }));
     };
 
     updateTreeDataFromFileAndContents();
-  }, [fileContents]);
+  }, [fileContents, treeData]); // ✅ treeData を依存配列に追加
 
   return (
     <FileManagerContext.Provider value={{}}>

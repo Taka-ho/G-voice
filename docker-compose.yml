@@ -27,17 +27,17 @@ services:
             - mysql
             - redis
             - command
-            - watch-prj
+            - watch-users-prj
             - file-in-container
-    watch-prj:
+    watch-users-prj:
         build:
-            context: ./websocket-app/watch-prj
-            dockerfile: watch-prj.Dockerfile
+            context: ./websocket-app/watch-users-prj
+            dockerfile: ./watch-users-prj.Dockerfile
         ports:
             - '3000:3000'
             - '8080:8080'
         volumes:
-            - './path/to/your/websocket-app:/path/inside/container'
+            - './app:/path/inside/container'
             - /var/run/docker.sock:/var/run/docker.sock
         extra_hosts:
             - 'sail:host-gateway'

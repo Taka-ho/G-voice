@@ -7,9 +7,10 @@ import TerminalComponent from './TerminalComponent';
 import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
-import Header from './Header/Header'; 
+import Header from './Header/Header';
 import './css/Editor.css';
 import { useAppData } from '.././Contexts/AppDataContext';
+import { useParams } from 'react-router-dom';
 
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
@@ -38,7 +39,7 @@ const usePusherComments = () => {
   return pusherComments;
 };
 
-const BroadcastRoom = ({ }) => {
+const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
@@ -47,34 +48,61 @@ const BroadcastRoom = ({ }) => {
   const [isBroadcasting, setBroadcasting] = useState(false);
   const [isSharing, setSharing] = useState(false);
   const [isFormDirty, setIsFormDirty] = useState(false);
-  const [showAlert, setShowAlert] = useState(false); // Alertの表示状態を管理
+  const [showAlert, setShowAlert] = useState(false);
 
   const toggleMic = () => setMicOn(!isMicOn);
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
   const toggleShare = () => setSharing(!isSharing);
-  const { fileAndContents, updateFileContents, comments, addComment } = useAppData();
-  
-  const BroadcastRoom = () => {
-    const { treeData } = useAppData();
-    const socketRef = useRef(null);
-  
-    useEffect(() => {
-      if (
-        socketRef.current &&
-        socketRef.current.readyState === WebSocket.OPEN &&
-        treeData
-      ) {
-        socketRef.current.send(
-          JSON.stringify({
-            type: 'update_tree',
-            data: treeData,
-          })
-        );
-      }
-    }, [treeData]);
-  
-    return <div className="broadcast-room">{/* your components here */}</div>;
-  };
+
+  const {
+    fileAndContents,
+    updateFileContents,
+    comments,
+    addComment,
+    treeData,
+  } = useAppData();
+
+  const { broadcastingRoomId } = useParams();
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      socketRef.current &&
+      socketRef.current.readyState === WebSocket.OPEN &&
+      treeData
+    ) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'update_tree',
+          data: treeData,
+        })
+      );
+    }
+  }, [treeData]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      const navType = performance.getEntriesByType('navigation')[0]?.type;
+      if (navType === 'reload') return;
+
+      navigator.sendBeacon(
+        '/broadcast/down',
+        new Blob(
+          [JSON.stringify({
+            reason: 'unload',
+            timestamp: new Date().toISOString(),
+            broadcastingRoomId,
+          })],
+          { type: 'application/json' }
+        )
+      );
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [broadcastingRoomId]);
 
   return (
     <div className='all-space'>
@@ -93,13 +121,13 @@ const BroadcastRoom = ({ }) => {
           message="配信を終了しますか？"
           onConfirm={() => {
             setShowAlert(false);
-            // ナビゲーションを続行するロジックをここに追加
+            // ナビゲーション処理など
           }}
           onCancel={() => setShowAlert(false)}
         />
       )}
 
-      <div style={{ display: 'flex', flex: 1 }}>
+      <div style={{ display: 'flex' }}>
         <FileTree
           fileNames={fileNames}
           setFileNames={setFileNames}

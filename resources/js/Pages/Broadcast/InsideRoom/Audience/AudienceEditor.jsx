@@ -74,14 +74,11 @@ const AudienceEditor = ({ selectedFiles, updateFileContents, updateSelectedFileN
         [fileName]: safeValue,
       };
       const fileId = fileIds[fileName];
-  
-      // localStorage の更新
-      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
+
       if (treeData && treeData.children) {
         const fileToUpdate = treeData.children.find((file) => file.id === fileId);
         if (fileToUpdate) {
           fileToUpdate.content = safeValue;
-          localStorage.setItem('treeData', JSON.stringify(treeData));
         }
       }
   

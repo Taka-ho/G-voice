@@ -101,6 +101,7 @@ class BroadCastController extends Controller
 
     public function DownBroadcastFromUnmount(Request $request)
     {
+        Log::debug('アンマウントされました');
         try {
             $broadcastingRoomId = $request->input('broadcastingRoomId');
             $userId = Auth::user()->id;
