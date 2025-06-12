@@ -21,3 +21,39 @@ $blue: rgb(77, 148, 255);
 .FileTree {
   margin-top: 1%;
 }
+
+/* FileTree.scss または App.css の末尾に追記 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// FileTree.scss
+
+.contextMenuItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.contextMenuItem:hover {
+  background-color: #f0f0f0;
+}
+
+.contextMenu {
+  position: absolute;
+  z-index: 10000;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px 0;
+  min-width: 160px;
+}

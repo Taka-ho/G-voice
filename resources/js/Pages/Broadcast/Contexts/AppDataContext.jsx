@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import useWebSocket from '../InsideRoom/FolderTree/useWebSocket';
+import { useParams } from 'react-router-dom';
 
 export const AppDataContext = createContext(null);
 
@@ -8,11 +10,30 @@ export const AppDataProvider = ({ children }) => {
     const stored = localStorage.getItem('treeData');
     return stored ? JSON.parse(stored) : null;
   });
-
   const [comments, setComments] = useState([]);
-
-  // ファイル名をキーとしたファイル内容データ構造
   const [fileAndContents, setFileAndContents] = useState({});
+
+  const { broadcastingRoomId } = useParams();
+  const ws = useWebSocket((message) => {
+    const { type, payload } = message;
+
+    if (type === 'file_system_event') {
+      console.log('Received file system update from WebSocket:', message);
+      const updatedTree = payload?.data?.updatedTree;
+      if (updatedTree) setTreeData(updatedTree);
+    } else if (type === 'file_content_update') {
+      console.log('Received file content update from WebSocket:', message);
+      const { fileName, newContent } = payload.data;
+
+      setFileAndContents(prev => ({
+        ...prev,
+        [fileName]: {
+          ...prev[fileName],
+          content: newContent
+        }
+      }));
+    }
+  });
 
   useEffect(() => {
     fetch('/api/comments')
@@ -23,30 +44,37 @@ export const AppDataProvider = ({ children }) => {
 
   useEffect(() => {
     if (treeData !== null) {
-      localStorage.setItem('treeData', JSON.stringify(treeData));
       const newFileAndContents = extractFilesFromTree(treeData);
       setFileAndContents(newFileAndContents);
+
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: 'file_system_event',
+          payload: {
+            eventType: 'fullTreeUpdate',
+            broadcastingRoomId,
+            data: { updatedTree: treeData }
+          }
+        }));
+      }
     }
-  }, [treeData]);
+  }, [treeData, ws, broadcastingRoomId]);
 
   const extractFilesFromTree = (node) => {
     let files = {};
-
     const traverse = (currentNode) => {
       if (!currentNode) return;
-
       if (!currentNode.children) {
-        // ファイルノード
         files[currentNode.name] = {
           id: currentNode.id,
           name: currentNode.name,
+          path: currentNode.path,
           content: currentNode.content || '',
         };
       } else if (Array.isArray(currentNode.children)) {
         currentNode.children.forEach(child => traverse(child));
       }
     };
-
     traverse(node);
     return files;
   };
@@ -73,10 +101,24 @@ export const AppDataProvider = ({ children }) => {
       [fileId]: { name: fileName, content: newContent }
     }));
 
-    setFileAndContents(prev => ({
-      ...prev,
-      [fileName]: { id: fileId, name: fileName, content: newContent }
-    }));
+    setFileAndContents(prev => {
+      const updated = {
+        ...prev,
+        [fileName]: { id: fileId, name: fileName, content: newContent }
+      };
+
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({
+          type: 'file_content_update',
+          payload: {
+            eventType: 'updateFileContent',
+            broadcastingRoomId,
+            data: { fileId, fileName, newContent }
+          }
+        }));
+      }
+      return updated;
+    });
   };
 
   return (
@@ -88,7 +130,7 @@ export const AppDataProvider = ({ children }) => {
       comments,
       addComment,
       updateFileContents,
-      fileAndContents, // <-- 追加
+      fileAndContents,
     }}>
       {children}
     </AppDataContext.Provider>

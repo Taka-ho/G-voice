@@ -87,7 +87,6 @@ const AudienceFileTree = ({ fileNames, setFileNames, updateFileContents, fileAnd
     const updatedTreeData = deleteNodeById(treeData, node.id);
     if (updatedTreeData) {
       setTreeData(updatedTreeData);
-      localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
     }
 
     // WebSocketを使用して削除処理を送信
@@ -120,7 +119,6 @@ const AudienceFileTree = ({ fileNames, setFileNames, updateFileContents, fileAnd
 
     setTreeData((prevTreeData) => {
       const updatedTree = updateNode(prevTreeData, updatedNode);
-      localStorage.setItem('treeData', JSON.stringify(updatedTree));
       return updatedTree;
     });
   };
