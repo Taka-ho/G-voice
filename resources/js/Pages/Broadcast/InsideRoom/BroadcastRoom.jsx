@@ -9,7 +9,7 @@ import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
 import Header from './Header/Header';
 import './css/Editor.css';
-import { useAppData } from '.././Contexts/AppDataContext';
+import { useAppData } from '../Contexts/AppDataContext';
 import { useParams } from 'react-router-dom';
 
 const usePusherComments = () => {
@@ -41,14 +41,15 @@ const usePusherComments = () => {
 
 const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
-  const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
 
   const [isMicOn, setMicOn] = useState(false);
   const [isBroadcasting, setBroadcasting] = useState(false);
   const [isSharing, setSharing] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState('');
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const { setBroadcastingRoomId } = useAppData();
 
   const toggleMic = () => setMicOn(!isMicOn);
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
@@ -64,6 +65,12 @@ const BroadcastRoom = () => {
 
   const { broadcastingRoomId } = useParams();
   const socketRef = useRef(null);
+
+  useEffect(() => {
+    if (broadcastingRoomId) {
+      setBroadcastingRoomId(broadcastingRoomId);
+    }
+  }, [broadcastingRoomId]);
 
   useEffect(() => {
     if (

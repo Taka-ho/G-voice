@@ -1,11 +1,14 @@
 import express from 'express';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import sendTargetCacheObject from './sendUsersCodeAsCache';
 import apiRouter from './routes';
 import { setupWebSocketHandlers } from './wsHandlers';
+import { validateWebSocketMessage, getContainerIdFromRedis } from './wsUtils';
+import { getDockerFileTree } from './dockerUtils';
+import _ from 'lodash';
 
 dotenv.config();
 

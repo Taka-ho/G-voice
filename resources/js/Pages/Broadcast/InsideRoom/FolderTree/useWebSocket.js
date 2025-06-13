@@ -1,21 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppData } from '../../Contexts/AppDataContext';
 
 export default function useWebSocket(onMessage) {
   const ws = useRef(null);
-  const { broadcastingRoomId } = useParams(); // ルーティングから取得
-
+  const { broadcastingRoomId } = useAppData();
   useEffect(() => {
+    if (!broadcastingRoomId) return;
+    
     ws.current = new WebSocket('ws://localhost:8080');
 
     ws.current.onopen = () => {
-      // WebSocketが開いたときにbroadcastingRoomIdを送信
-      if (broadcastingRoomId) {
-        ws.current.send(JSON.stringify({
-          type: 'JOIN_ROOM',
-          broadcastingRoomId,
-        }));
-      }
+      ws.current.send(JSON.stringify({
+        type: 'get_file_tree',
+        broadcastingRoomId,
+      }));
     };
 
     ws.current.onmessage = (event) => {

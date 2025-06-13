@@ -1,11 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import ContextMenu from './ContextMenu';
-// パスを修正: web-app/resources/js/Pages/Broadcast/InsideRoom/FolderTree から
-// web-app/resources/js/Pages/Broadcast/Contexts への相対パス
 import { useAppData } from '../../Contexts/AppDataContext';
+import useWebSocket from './useWebSocket';
 
 const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
-  const { treeData, fileAndContents, setTreeData: setTreeDataFromContext } = useAppData();
+  const {
+    treeData,
+    setTreeData,
+    fileAndContents,
+  } = useAppData();
+  // WebSocket からメッセージを受け取ったときの処理
+  const handleWebSocketMessage = (message) => {
+    if (message.type === 'file_tree') {
+      setTreeData(message.data); // ツリー情報をセット
+    }
+
+    // 必要に応じて他のメッセージも処理可能
+    // if (message.type === 'file_created') ...
+  };
+
+  // WebSocket フックを呼び出す
+  useWebSocket(handleWebSocketMessage);
 
   const clickedFile = (clickedFile) => {
     if (!clickedFile.children) {
@@ -17,9 +32,9 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
 
       if (!fileNames.some((file) => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        // fileAndContentsから内容を取得し、updateFileContentsに渡す
+
         const content = fileAndContents?.[openedFile.name]?.content ?? '';
-        updateFileContents(openedFile.id, openedFile.name, content); // fileIdも渡すように変更
+        updateFileContents(openedFile.id, openedFile.name, content);
       }
     }
   };
@@ -27,13 +42,13 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
   if (!treeData) return <div>Loading tree...</div>;
 
   return (
-    <div style={{ overflowY: 'auto'}}>
+    <div style={{ overflowY: 'auto' }}>
       <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
         <ContextMenu
           data={treeData}
           indent={0}
           onClick={clickedFile}
-          setTreeData={setTreeDataFromContext}
+          setTreeData={setTreeData}
         />
       </ul>
     </div>
