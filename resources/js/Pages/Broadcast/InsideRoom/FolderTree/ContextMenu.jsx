@@ -2,10 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import useWebSocket from './useWebSocket';
 import FileIcon from './FileIcon';
-import { useParams } from 'react-router-dom';
 import { useAppData } from '../../Contexts/AppDataContext';
 
-let globalCloseContextMenu; // グローバルに追跡
+let globalCloseContextMenu;
 
 const ContextMenu = ({
   data,
@@ -14,12 +13,11 @@ const ContextMenu = ({
 }) => {
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
   const popupRef = useRef(null);
-  const { broadcastingRoomId } = useParams();
-  const { setTreeData } = useAppData(); // AppDataContextからsetTreeDataを取得
-  const ws = useWebSocket((message) => { // useWebSocketからwsインスタンスを取得
+  const { broadcastingRoomId, setTreeData } = useAppData();
+
+  const ws = useWebSocket((message) => {
     if (message.type === 'file-update' || message.type === 'file_system_event') {
-      // サーバーからのファイルシステムイベントもここで処理
-      setTreeData(message.updatedTree || message.payload.data.updatedTree); // サーバーからのツリー更新を適用
+      setTreeData(message.updatedTree || message.payload.data.updatedTree);
     }
   });
 
@@ -32,19 +30,16 @@ const ContextMenu = ({
       });
       const success = res.data.success;
 
-      // サーバーでの操作が成功したらWebSocketで通知
       if (success && ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({
           type: 'file_system_event',
           payload: {
-            eventType: type, // 'addFile', 'addFolder', 'rename', 'delete'
+            eventType: type,
             broadcastingRoomId,
-            data: { 
-              ...payload, 
-              // サーバーからの最新ツリー構造をWebSocket経由でクライアントに通知する場合に以下を追加
-              // updatedTree: res.data.updatedTree // サーバーがツリー全体を返す場合
-            }
-          }
+            data: {
+              ...payload,
+            },
+          },
         }));
       }
       return success;
@@ -85,7 +80,7 @@ const ContextMenu = ({
     const success = await requestServerChange('rename', {
       oldPath: node.path,
       newName,
-      isFolder: !!node.children // フォルダかどうかも渡す
+      isFolder: !!node.children,
     });
 
     if (success) closeContextMenu();
@@ -97,7 +92,7 @@ const ContextMenu = ({
 
     const success = await requestServerChange('delete', {
       path: node.path,
-      isFolder: !!node.children // フォルダかどうかも渡す
+      isFolder: !!node.children,
     });
 
     if (success) closeContextMenu();
@@ -122,9 +117,18 @@ const ContextMenu = ({
       }
     };
 
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setContextMenu({ visible: false, x: 0, y: 0 });
+      }
+    };
+
     document.addEventListener('click', handleClick);
+    document.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 

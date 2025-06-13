@@ -11,7 +11,12 @@ COPY package*.json ./
 RUN npm install && \
     npm install -g ts-node nodemon && \
     npm install axios chokidar ioredis ws && \
-    npm install --save-dev @types/ws
+    npm install --save-dev @types/ws && \
+    npm install uuid && \
+    npm install --save-dev @types/uuid && \
+    npm install lodash && \
+    npm install --save-dev @types/lodash
+
 
 # アプリケーションファイルをすべてコピー
 COPY . .

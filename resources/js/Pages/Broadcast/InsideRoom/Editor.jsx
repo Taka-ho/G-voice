@@ -18,11 +18,6 @@ const Editor = ({ selectedFiles }) => {
     const newFileIds = selectedFiles.map(file => file.id);
     setFileIds(newFileIds);
 
-    // 最初のファイルをデフォルトで選択
-    if (!selectedFileId && newFileIds.length > 0) {
-      setSelectedFileId(newFileIds[0]);
-    }
-
     // fileContents にまだ登録されていないファイルを追加
     setFileContents(prevContents => {
       const updated = { ...prevContents };
@@ -38,6 +33,11 @@ const Editor = ({ selectedFiles }) => {
       });
       return updated;
     });
+
+    // 最初のファイルをデフォルトで選択（fileContents に追加した後）
+    if (!selectedFileId && newFileIds.length > 0) {
+      setSelectedFileId(newFileIds[0]);
+    }
   }, [selectedFiles]);
 
   const handleOnChange = (newValue, fileId) => {
@@ -50,11 +50,21 @@ const Editor = ({ selectedFiles }) => {
       },
     }));
   };
-
+  console.log(fileContents);
   const handleTabSelect = (selectedIndex) => {
     const newSelectedId = fileIds[selectedIndex];
     setSelectedFileId(newSelectedId);
   };
+
+  // ファイル内容がまだ読み込まれていない場合は null 表示
+  if (
+    !selectedFiles ||
+    selectedFiles.length === 0 ||
+    !selectedFileId ||
+    !fileContents[selectedFileId]
+  ) {
+    return <div className="editor-container">Loading...</div>;
+  }
 
   return (
     <div className="editor-container">

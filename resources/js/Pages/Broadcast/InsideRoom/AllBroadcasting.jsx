@@ -1,22 +1,23 @@
 import React, { useEffect } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from 'react-router-dom';
 import BroadcastRoom from './BroadcastRoom';
 import ViewerDashboard from './Audience/ViewerDashboard';
 import Pusher from 'pusher-js';
 import { useAppData } from '../Contexts/AppDataContext';
 
 const AllBroadcasting = () => {
-  // コンテキストからコメント関連を取得
-  const { comments, addComment, setComments } = useAppData();
+  const { setComments } = useAppData();
 
   useEffect(() => {
-    // Pusherセットアップ
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
       cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1',
     });
 
-    const channel = pusher.subscribe('comment');
-    channel.bind('SentComment', (newComment) => {
+    const commentChannel = pusher.subscribe('comment');
+    commentChannel.bind('SentComment', (newComment) => {
       setComments(prev => [...prev, newComment]);
     });
 
@@ -26,18 +27,17 @@ const AllBroadcasting = () => {
     });
 
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      commentChannel.unbind_all();
+      commentChannel.unsubscribe();
       endChannel.unbind_all();
       endChannel.unsubscribe();
     };
   }, [setComments]);
 
-  // ルーター定義
   const router = createBrowserRouter([
     {
       path: '/broadcast/:broadcastingRoomId',
-      element: <BroadcastRoom />,
+      element: <BroadcastRoom />, // 編集不要
     },
     {
       path: '/broadcast/stream/:broadcastingRoomId',
@@ -45,9 +45,7 @@ const AllBroadcasting = () => {
     },
   ]);
 
-  return (
-    <RouterProvider router={router} />
-  );
+  return <RouterProvider router={router} />;
 };
 
 export default AllBroadcasting;

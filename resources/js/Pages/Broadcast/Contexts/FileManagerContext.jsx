@@ -27,7 +27,7 @@ export const FileManagerProvider = ({ children }) => {
     };
 
     updateTreeDataFromFileAndContents();
-  }, [fileContents, treeData]); // ✅ treeData を依存配列に追加
+  }, [fileContents, treeData]);
 
   return (
     <FileManagerContext.Provider value={{}}>
