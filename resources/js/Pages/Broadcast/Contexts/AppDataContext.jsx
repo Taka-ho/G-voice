@@ -35,7 +35,7 @@ export const AppDataProvider = ({ children }) => {
       .catch(() => {});
     }, []);
 
-  const updateFileContents = useCallback((fileId, fileName, newContent) => {
+  const updateFileContents = useCallback((fileId, fileName, newContent, path) => {
     setFileContents(prev => ({
       ...prev,
       [fileId]: { name: fileName, content: newContent, path: path },

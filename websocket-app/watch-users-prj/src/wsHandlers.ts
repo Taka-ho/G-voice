@@ -20,6 +20,7 @@ export const setupWebSocketHandlers = (wss: WebSocketServer, redis: any) => {
       try {
         const parsedMessage = validateWebSocketMessage(message);
         const { broadcastingRoomId, type, payload } = parsedMessage;
+        clients.set(ws, { userId: '', roomId: broadcastingRoomId });
         const containerId = await getContainerIdFromRedis(redis, broadcastingRoomId);
         if (!containerId) throw new Error('Invalid container ID');
         console.log(type);
