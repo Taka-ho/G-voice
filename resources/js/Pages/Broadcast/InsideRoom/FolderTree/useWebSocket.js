@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../Contexts/AppDataContext';
 
-export default function useWebSocket(onMessage) {
+export default function useWebSocket(onMessage, enable = true) {
   const ws = useRef(null);
   const isReady = useRef(false);
   const [readyToSend, setReadyToSend] = useState(false);
-  const hasSentInitialRequest = useRef(false);
   const previousFileContents = useRef({});
-  const initialFileContents = useRef(null); // 初期ロード用のキャッシュ
+  const hasSentInitialRequest = useRef(false);
   const { broadcastingRoomId, treeData, fileContents } = useAppData();
 
+  // WebSocket 接続・初期ファイルツリーリクエスト
   useEffect(() => {
-    if (!broadcastingRoomId) return;
+    if (!enable || !broadcastingRoomId) return;
 
     ws.current = new WebSocket('ws://localhost:8080');
 
@@ -21,19 +21,9 @@ export default function useWebSocket(onMessage) {
 
       if (!hasSentInitialRequest.current) {
         const shouldWatch = treeData && (!fileContents || Object.keys(fileContents).length === 0);
+        const type = shouldWatch ? 'watch_file_tree' : 'get_file_tree';
 
-        if (shouldWatch) {
-          ws.current.send(JSON.stringify({
-            type: 'watch_file_tree',
-            broadcastingRoomId,
-          }));
-        } else {
-          ws.current.send(JSON.stringify({
-            type: 'get_file_tree',
-            broadcastingRoomId,
-          }));
-        }
-
+        ws.current.send(JSON.stringify({ type, broadcastingRoomId }));
         hasSentInitialRequest.current = true;
       }
     };
@@ -48,38 +38,30 @@ export default function useWebSocket(onMessage) {
       setReadyToSend(false);
       hasSentInitialRequest.current = false;
       previousFileContents.current = {};
-      initialFileContents.current = null;
       ws.current?.close();
     };
-  }, [onMessage, broadcastingRoomId]);
+  }, [enable, onMessage, broadcastingRoomId]);
 
+  // ファイル内容更新の送信（ファイル変更時のみ）
   useEffect(() => {
-    if (!readyToSend || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    if (!enable || !readyToSend || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
     if (!fileContents || Object.keys(fileContents).length === 0) return;
 
-    Object.entries(fileContents).forEach(([id, { name, content, path }]) => {
-      if (!name || !path || content == null) return;
+    for (const [id, { name, content, path }] of Object.entries(fileContents)) {
+      if (!name || !path || content == null) continue;
 
       const prev = previousFileContents.current[id];
-      if (prev && prev.content === content && prev.path === path && prev.name === name) return;
+      if (prev && prev.content === content && prev.path === path && prev.name === name) continue;
 
-      const message = {
+      ws.current.send(JSON.stringify({
         type: 'update_file_content',
         broadcastingRoomId,
-        payload: {
-          file: {
-            id,
-            name,
-            path,
-            content,
-          },
-        },
-      };
+        payload: { file: { id, name, path, content } },
+      }));
 
-      ws.current.send(JSON.stringify(message));
       previousFileContents.current[id] = { name, path, content };
-    });
-  }, [fileContents, broadcastingRoomId, readyToSend]);
+    }
+  }, [fileContents, broadcastingRoomId, readyToSend, enable]);
 
   return ws;
 }
