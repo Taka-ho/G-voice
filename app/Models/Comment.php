@@ -12,7 +12,7 @@ class Comment extends Model
     use HasFactory;
 
     protected $fillable = ['comment']; // フィールド名を修正
-    protected $table = 'broadcasting_rooms_comments';
+    protected $table = 'broadcasting_room_comments';
 
     public function broadcastingRoom(): BelongsTo
     {

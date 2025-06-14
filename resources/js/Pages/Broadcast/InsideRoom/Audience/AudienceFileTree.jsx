@@ -75,7 +75,7 @@ const AudienceFileTree = ({ fileNames, setFileNames, updateFileContents, fileAnd
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
   
         const content = fileAndContents?.[openedFile.name] ?? ''; // ←安全にアクセス
-        updateFileContents(openedFile.name, content);
+        updateFileContents(openedFile.id, openedFile.name, content, openedFile.path);
       }
     }
   };

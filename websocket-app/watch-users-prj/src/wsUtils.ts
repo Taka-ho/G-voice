@@ -1,8 +1,9 @@
-import axios from 'axios';
+import fs from 'fs';
+import http from 'http';
 import { Buffer } from 'buffer';
 import { v4 as uuidv4 } from 'uuid';
 
-const DOCKER_BASE_URL = process.env.DOCKER_ENGINE_URL || 'http://host.docker.internal:2375';
+const SOCKET_PATH = '/var/run/docker.sock';
 
 export const validateWebSocketMessage = (message: string) => {
   const parsed = JSON.parse(message);
@@ -18,64 +19,86 @@ export const getContainerIdFromRedis = async (redis: any, roomId: string): Promi
   return redisData.containerId || null;
 };
 
-export const execCommand = async (containerId: string, cmd: string[]): Promise<string> => {
-  try {
-    const execRes = await axios.post(`${DOCKER_BASE_URL}/containers/${containerId}/exec`, {
-      AttachStdout: true,
-      AttachStderr: true,
-      Cmd: cmd,
-      Tty: false,
+const dockerRequest = (options: http.RequestOptions, postData?: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const req = http.request({ ...options, socketPath: SOCKET_PATH }, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(JSON.parse(data)));
     });
-    const execId = execRes.data.Id;
+    req.on('error', reject);
+    if (postData) req.write(postData);
+    req.end();
+  });
+};
 
-    const execStart = await axios.post(`${DOCKER_BASE_URL}/exec/${execId}/start`, {
-      Detach: false,
-      Tty: false,
-    }, { responseType: 'stream' });
+export const execCommand = async (containerId: string, cmd: string[]): Promise<string> => {
+  const execCreate = await dockerRequest({
+    path: `/containers/${containerId}/exec`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  }, JSON.stringify({
+    AttachStdout: true,
+    AttachStderr: true,
+    Cmd: cmd,
+    Tty: false,
+  }));
 
-    return new Promise((resolve, reject) => {
-      let stdout = '', stderr = '';
-      execStart.data.on('data', (chunk: Buffer) => {
-        const streamType = chunk[0];
-        const size = chunk.readUInt32BE(4);
-        const data = chunk.slice(8, 8 + size);
+  const execId = execCreate.Id;
 
-        if (streamType === 1) stdout += data.toString('utf8');
-        else if (streamType === 2) stderr += data.toString('utf8');
-      });
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      socketPath: SOCKET_PATH,
+      path: `/exec/${execId}/start`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+      res.on('end', async () => {
+        const buffer = Buffer.concat(chunks);
+        let stdout = '';
+        let cursor = 0;
 
-      execStart.data.on('end', async () => {
+        while (cursor + 8 <= buffer.length) {
+          const streamType = buffer[cursor];
+          const dataLength = buffer.readUInt32BE(cursor + 4);
+          const dataStart = cursor + 8;
+          const dataEnd = dataStart + dataLength;
+
+          if (dataEnd > buffer.length) break;
+          const payload = buffer.slice(dataStart, dataEnd).toString('utf8');
+          if (streamType === 1) stdout += payload;
+          cursor = dataEnd;
+        }
+
         try {
-          const inspect = await axios.get(`${DOCKER_BASE_URL}/exec/${execId}/json`);
-          inspect.data.ExitCode === 0
-            ? resolve(stdout)
-            : reject(new Error(stderr || stdout || `Command exited with code ${inspect.data.ExitCode}`));
-        } catch (inspectError: any) {
-          reject(new Error(`Exec inspection failed: ${inspectError.message}`));
+          const inspect = await dockerRequest({
+            path: `/exec/${execId}/json`,
+            method: 'GET',
+          });
+          if (inspect.ExitCode === 0) resolve(stdout);
+          else reject(new Error(stdout || `Command exited with code ${inspect.ExitCode}`));
+        } catch (err: any) {
+          reject(new Error(`Exec inspection failed: ${err.message}`));
         }
       });
-
-      execStart.data.on('error', (err: Error) => {
-        reject(new Error(`Docker exec stream error: ${err.message}`));
-      });
     });
-  } catch (error: any) {
-    console.error(`execCommand (${cmd.join(' ')}) failed:`, error.response?.data || error.message);
-    throw new Error(`Docker exec command failed: ${error.message}`);
-  }
+
+    req.on('error', reject);
+    req.write(JSON.stringify({ Detach: false, Tty: false }));
+    req.end();
+  });
 };
 
-export const sanitizeName = (name: string): string => {
-  return name.replace(/\s+/g, '');
-};
+export const sanitizeName = (name: string): string => name.replace(/\s+/g, '');
 
 export const moveFile = async (containerId: string, oldPath: string, newPath: string) => {
   await execCommand(containerId, ['mv', oldPath, newPath]);
 };
 
 export const getDockerFileTree = async (containerId: string, rootPath: string): Promise<any> => {
-  // console.log(`Fetching Docker file tree from ${rootPath} in container ${containerId}`);
-
   const tree: any = {
     id: uuidv4(),
     name: rootPath === '/' ? 'root' : rootPath.split('/').pop() || '',
@@ -87,44 +110,28 @@ export const getDockerFileTree = async (containerId: string, rootPath: string): 
   try {
     const excluded = ['.ssh', '.bashrc', '.profile', '.bash_history'];
 
-    // ls して除外フィルタをかける
     const lsOutput = await execCommand(containerId, ['ls', rootPath]);
-    const visibleItems = lsOutput
-      .trim()
-      .split('\n')
-      .filter(Boolean)
-      .filter(name => !excluded.includes(name));
+    const visibleItems = lsOutput.trim().split('\n').map(name => name.trim()).filter(Boolean).filter(name => !excluded.includes(name));
+    const pathsToInclude = visibleItems.map(name => `${rootPath.replace(/\/$/, '')}/${name}`);
 
-    const pathsToInclude = [];
-
-    for (const name of visibleItems) {
-      const fullPath = `${rootPath.replace(/\/$/, '')}/${name}`;
-      pathsToInclude.push(fullPath);
-    }
-
-    // find で得られるすべてのパス（フィルタリング済み）
     const allPaths: string[] = [];
-
-    for (const path of pathsToInclude) {
+    for (const rawPath of pathsToInclude) {
+      const sanitizedPath = rawPath.trim().replace(/\s+/g, '');
       try {
-        const output = await execCommand(containerId, ['find', path]);
-        allPaths.push(...output.trim().split('\n').filter(Boolean));
+        const output = await execCommand(containerId, ['find', sanitizedPath]);
+        allPaths.push(...output.trim().split('\n').map(p => p.trim()).filter(Boolean));
       } catch (err) {
-        console.error(`Failed to find path: ${path}`, err);
+        console.error(`Failed to find path: ${rawPath}`, err);
       }
     }
 
-    // 階層構造の構築
     const nodes = new Map<string, any>();
     nodes.set(rootPath, tree);
-
     allPaths.sort((a, b) => a.split('/').length - b.split('/').length);
 
     for (const fullPath of allPaths) {
       const name = fullPath.split('/').pop() || '';
       const parentPath = fullPath.substring(0, fullPath.lastIndexOf('/')) || '/';
-
-      // ディレクトリかどうかをチェック
       let isDirectory = false;
       try {
         await execCommand(containerId, ['test', '-d', fullPath]);
@@ -139,23 +146,12 @@ export const getDockerFileTree = async (containerId: string, rootPath: string): 
         path: fullPath,
         type: isDirectory ? 'directory' : 'file',
       };
-
-      if (isDirectory) {
-        node.children = [];
-      } else {
-        try {
-          const base64Content = await execCommand(containerId, ['base64', fullPath]);
-          node.content = Buffer.from(base64Content.trim(), 'base64').toString('utf-8');
-        } catch {
-          node.content = '';
-        }
-      }
+      if (isDirectory) node.children = [];
 
       const parentNode = nodes.get(parentPath);
       if (parentNode && parentNode.children) {
         parentNode.children.push(node);
       }
-
       nodes.set(fullPath, node);
     }
 
@@ -163,5 +159,15 @@ export const getDockerFileTree = async (containerId: string, rootPath: string): 
   } catch (error: any) {
     console.error('Failed to get Docker file tree:', error.message);
     throw error;
+  }
+};
+
+export const getFileContent = async (containerId: string, filePath: string): Promise<string> => {
+  try {
+    const base64Content = await execCommand(containerId, ['base64', filePath]);
+    return Buffer.from(base64Content.trim(), 'base64').toString('utf-8');
+  } catch (err) {
+    console.error(`Failed to read content from: ${filePath}`, err);
+    return '';
   }
 };
