@@ -7,7 +7,7 @@ import sendTargetCacheObject from './sendUsersCodeAsCache';
 import apiRouter from './routes';
 import { setupWebSocketHandlers } from './wsHandlers';
 import { validateWebSocketMessage, getContainerIdFromRedis } from './wsUtils';
-import { getDockerFileTree } from './dockerUtils';
+import { getDockerFileTree } from './wsUtils';
 import _ from 'lodash';
 
 dotenv.config();

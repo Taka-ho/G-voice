@@ -1,0 +1,10 @@
+2025/06/13 20:48:10 socat[49780] N listening on LEN=28 AF=30 [0000:0000:0000:0000:0000:0000:0000:0000]:2375
+2025/06/13 20:48:11 socat[49780] N accepting connection from LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:53355 on LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:2375
+2025/06/13 20:48:11 socat[49780] N forked off child process 49781
+2025/06/13 20:48:11 socat[49780] N listening on LEN=28 AF=30 [0000:0000:0000:0000:0000:0000:0000:0000]:2375
+2025/06/13 20:48:11 socat[49780] N accepting connection from LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:53356 on LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:2375
+2025/06/13 20:48:11 socat[49780] N forked off child process 49782
+2025/06/13 20:48:11 socat[49780] N listening on LEN=28 AF=30 [0000:0000:0000:0000:0000:0000:0000:0000]:2375
+2025/06/13 20:48:11 socat[49781] N opening connection to LEN=22 AF=1 "/var/run/docker.sock"
+2025/06/13 20:48:11 socat[49780] N accepting connection from LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:53357 on LEN=28 AF=30 [0000:0000:0000:0000:0000:ffff:7f00:0001]:2375
+2025/06/13 20:48:11 socat[49781] N successfully connected from local address LEN=16 AF=1 ""

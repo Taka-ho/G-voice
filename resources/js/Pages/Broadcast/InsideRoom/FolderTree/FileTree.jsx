@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import ContextMenu from './ContextMenu';
 import { useAppData } from '../../Contexts/AppDataContext';
 import useWebSocket from './useWebSocket';
@@ -10,14 +10,17 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
     fileAndContents,
   } = useAppData();
   // WebSocket からメッセージを受け取ったときの処理
-  const handleWebSocketMessage = (message) => {
-    if (message.type === 'file_tree') {
-      setTreeData(message.data); // ツリー情報をセット
-    }
+  const handleWebSocketMessage = useCallback(
+    (message) => {
+      if (message.type === 'file_tree') {
+        setTreeData(message.data); // ツリー情報をセット
+      }
 
     // 必要に応じて他のメッセージも処理可能
     // if (message.type === 'file_created') ...
-  };
+  },
+  [setTreeData]
+  );
 
   // WebSocket フックを呼び出す
   useWebSocket(handleWebSocketMessage);
@@ -34,7 +37,7 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
 
         const content = fileAndContents?.[openedFile.name]?.content ?? '';
-        updateFileContents(openedFile.id, openedFile.name, content);
+        updateFileContents(openedFile.id, openedFile.name, content, openedFile.path);
       }
     }
   };

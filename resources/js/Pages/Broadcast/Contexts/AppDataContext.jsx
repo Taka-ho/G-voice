@@ -1,6 +1,6 @@
 // AppDataContext.js
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
 const AppDataContext = createContext(null);
 
@@ -19,7 +19,7 @@ export const AppDataProvider = ({ children }) => {
   const [treeData, setTreeData] = useState(null);
   const [comments, setComments] = useState([]);
 
-  const addComment = (newComment) => {
+  const addComment = useCallback((newComment) => {
     fetch('/api/comments', {
       method: 'POST',
       headers: {
@@ -33,31 +33,43 @@ export const AppDataProvider = ({ children }) => {
       .then(res => res.json())
       .then(data => setComments(prev => [...prev, data]))
       .catch(() => {});
-  };
+    }, []);
 
-  const updateFileContents = (fileId, fileName, newContent) => {
+  const updateFileContents = useCallback((fileId, fileName, newContent) => {
     setFileContents(prev => ({
       ...prev,
-      [fileId]: { name: fileName, content: newContent }
+      [fileId]: { name: fileName, content: newContent, path: path },
     }));
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      fileContents,
+      setFileContents,
+      broadcastingRoomId,
+      setBroadcastingRoomId,
+      treeData,
+      setTreeData,
+      comments,
+      addComment,
+      updateFileContents,
+      fileAndContents,
+    }),
+    [
+      fileContents,
+      broadcastingRoomId,
+      treeData,
+      comments,
+      addComment,
+      updateFileContents,
+      fileAndContents,
+    ]
+  );
 
   return (
-    <AppDataContext.Provider
-      value={{
-        fileContents,
-        setFileContents,
-        broadcastingRoomId,
-        setBroadcastingRoomId,
-        treeData,
-        setTreeData,
-        comments,
-        addComment,
-        updateFileContents,
-        fileAndContents,
-      }}
-    >
+    <AppDataContext.Provider value={contextValue}>
       {children}
     </AppDataContext.Provider>
   );
+
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { useAppData } from '../Contexts/AppDataContext';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
@@ -7,7 +7,7 @@ import './css/Tab.css';
 import './css/CommentList.css';
 import './css/Terminal.css';
 
-const Editor = ({ selectedFiles }) => {
+const EditorComponents = ({ selectedFiles }) => {
   const { fileContents, setFileContents } = useAppData();
   const [selectedFileId, setSelectedFileId] = useState('');
   const [fileIds, setFileIds] = useState([]);
@@ -18,7 +18,6 @@ const Editor = ({ selectedFiles }) => {
     const newFileIds = selectedFiles.map(file => file.id);
     setFileIds(newFileIds);
 
-    // fileContents にまだ登録されていないファイルを追加
     setFileContents(prevContents => {
       const updated = { ...prevContents };
       selectedFiles.forEach(file => {
@@ -34,13 +33,12 @@ const Editor = ({ selectedFiles }) => {
       return updated;
     });
 
-    // 最初のファイルをデフォルトで選択（fileContents に追加した後）
     if (!selectedFileId && newFileIds.length > 0) {
       setSelectedFileId(newFileIds[0]);
     }
   }, [selectedFiles]);
 
-  const handleOnChange = (newValue, fileId) => {
+  const handleOnChange = useCallback((newValue, fileId) => {
     if (!fileId) return;
     setFileContents(prevContents => ({
       ...prevContents,
@@ -49,14 +47,13 @@ const Editor = ({ selectedFiles }) => {
         content: newValue,
       },
     }));
-  };
-  console.log(fileContents);
+  }, [setFileContents]);
+
   const handleTabSelect = (selectedIndex) => {
     const newSelectedId = fileIds[selectedIndex];
     setSelectedFileId(newSelectedId);
   };
 
-  // ファイル内容がまだ読み込まれていない場合は null 表示
   if (
     !selectedFiles ||
     selectedFiles.length === 0 ||
@@ -94,4 +91,5 @@ const Editor = ({ selectedFiles }) => {
   );
 };
 
+const Editor = React.memo(EditorComponents);
 export default Editor;

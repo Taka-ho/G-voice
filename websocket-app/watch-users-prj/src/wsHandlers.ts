@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { stopRoomWatchLoop } from './watcher';
 import {
   validateWebSocketMessage,
   getContainerIdFromRedis,
@@ -6,6 +7,7 @@ import {
   moveFile,
   getDockerFileTree,
 } from './wsUtils';
+import { watchAndBroadcastDiff } from './watcher';
 
 export const setupWebSocketHandlers = (wss: WebSocketServer, redis: any) => {
   const clients = new Map<WebSocket, { userId: string; roomId: string }>();
@@ -20,7 +22,7 @@ export const setupWebSocketHandlers = (wss: WebSocketServer, redis: any) => {
         const { broadcastingRoomId, type, payload } = parsedMessage;
         const containerId = await getContainerIdFromRedis(redis, broadcastingRoomId);
         if (!containerId) throw new Error('Invalid container ID');
-
+        console.log(type);
         switch (type) {
           case 'rename': {
             const { oldPath, newPath } = payload;
@@ -35,10 +37,33 @@ export const setupWebSocketHandlers = (wss: WebSocketServer, redis: any) => {
             break;
           }
 
+          case 'watch_file_tree': {
+            watchAndBroadcastDiff(redis, containerId, '/root', broadcastingRoomId, ws);
+            ws.send(JSON.stringify({ status: 'success', type: 'watch_started' }));
+            break;
+          }
+
           case 'exec': {
             const { cmd } = payload;
             const result = await execCommand(containerId, cmd);
             ws.send(JSON.stringify({ status: 'success', type: 'exec_result', data: result }));
+            break;
+          }
+
+          case 'update_file_content': {
+            const { file } = payload;
+            const { path, content } = file;
+
+            if (!path || content == null) {
+              throw new Error('Invalid file payload');
+            }
+
+            // ファイルの内容を更新
+            const escapedContent = content.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            const command = `echo "${escapedContent}" > "${path}"`;
+            await execCommand(containerId, ['sh', '-c', command]);
+
+            ws.send(JSON.stringify({ status: 'success', type: 'update_file_content', path }));
             break;
           }
 
@@ -50,6 +75,14 @@ export const setupWebSocketHandlers = (wss: WebSocketServer, redis: any) => {
         ws.send(JSON.stringify({ status: 'error', message: err.message }));
         ws.close();
       }
+    });
+
+    ws.on('close', () => {
+      const clientInfo = clients.get(ws);
+      if (clientInfo?.roomId) {
+        stopRoomWatchLoop(clientInfo.roomId);
+      }
+      clients.delete(ws);
     });
   });
 };
