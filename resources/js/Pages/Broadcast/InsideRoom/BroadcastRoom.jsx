@@ -111,6 +111,29 @@ const BroadcastRoom = () => {
     };
   }, [broadcastingRoomId]);
 
+  useEffect(() => {
+    if (!treeData) return;
+
+    const findNodeByPath = (node, path) => {
+      if (!node) return null;
+      if (node.path === path) return node;
+      if (Array.isArray(node.children)) {
+        for (let child of node.children) {
+          const found = findNodeByPath(child, path);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    setFileNames(prev =>
+      prev.map(file => {
+        const node = findNodeByPath(treeData, file.path);
+        return node ? { ...file, id: node.id } : file;
+      })
+    );
+  }, [treeData]);
+
   return (
     <div className='all-space'>
       <Head title="配信部屋〜" />

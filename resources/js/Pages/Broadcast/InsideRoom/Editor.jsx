@@ -8,22 +8,15 @@ import './css/CommentList.css';
 import './css/Terminal.css';
 
 const EditorComponents = ({ selectedFiles }) => {
-  const { fileContents, setFileContents, treeData } = useAppData();
+  const { fileContents, setFileContents, treeData, updateFileContents } = useAppData();
   const [selectedFileId, setSelectedFileId] = useState('');
-  const [fileIds, setFileIds] = useState([]);
   const [currentFiles, setCurrentFiles] = useState([]);
 
-  useEffect(() => {
-    console.log('Current Files:', currentFiles);
-  }, [currentFiles]);
-  
-
+  // ファイル追加/削除時に現在のタブ一覧をIDで追従
   useEffect(() => {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
-    const newFileIds = selectedFiles.map(file => file.id);
-    setFileIds(newFileIds);
-
+    // fileContentsも常にIDで管理
     setFileContents(prevContents => {
       const updated = { ...prevContents };
       selectedFiles.forEach(file => {
@@ -39,13 +32,31 @@ const EditorComponents = ({ selectedFiles }) => {
       return updated;
     });
 
-    setCurrentFiles(selectedFiles);
+    setCurrentFiles(prevFiles => {
+      // 既存のID順序と内容を維持しつつ、新規ファイルも末尾追加
+      const ids = selectedFiles.map(f => f.id);
+      const next = [];
+      ids.forEach(id => {
+        const existing = prevFiles.find(f => f.id === id);
+        const sel = selectedFiles.find(f => f.id === id);
+        next.push(existing ? { ...existing, ...sel } : sel);
+      });
+      return next;
+    });
 
-    if (!selectedFileId && newFileIds.length > 0) {
-      setSelectedFileId(newFileIds[0]);
+    // 新規追加時のみ最初のファイルを開く
+    if (!selectedFileId && selectedFiles.length > 0) {
+      setSelectedFileId(selectedFiles[0].id);
+    } else if (
+      selectedFileId &&
+      !selectedFiles.some(file => file.id === selectedFileId)
+    ) {
+      // 現在選択中のファイルが削除された場合、先頭にフォーカス
+      setSelectedFileId(selectedFiles[0]?.id || '');
     }
-  }, [selectedFiles,]);
+  }, [selectedFiles]);
 
+  // ファイル名やpathがtreeDataで変更されたらcurrentFilesをIDで追従
   useEffect(() => {
     if (!treeData || currentFiles.length === 0) return;
 
@@ -63,15 +74,20 @@ const EditorComponents = ({ selectedFiles }) => {
 
     const updated = currentFiles.map(file => {
       const updatedNode = findNodeById(treeData, file.id);
-      return updatedNode ? {
-        ...file,
-        name: updatedNode.name,
-        path: updatedNode.path,
-      } : file;
+      if (updatedNode) {
+        // 常にファイル名・パスを同期
+        updateFileContents(file.id, updatedNode.name, fileContents[file.id]?.content, updatedNode.path);
+        return {
+          ...file,
+          name: updatedNode.name,
+          path: updatedNode.path,
+        };
+      }
+      return file;
     });
 
     setCurrentFiles(updated);
-  }, [treeData, selectedFiles]);
+  }, [treeData]);
 
   const handleOnChange = useCallback((newValue, fileId) => {
     if (!fileId) return;
@@ -83,6 +99,8 @@ const EditorComponents = ({ selectedFiles }) => {
       },
     }));
   }, [setFileContents]);
+
+  const fileIds = currentFiles.map(f => f.id);
 
   const handleTabSelect = (selectedIndex) => {
     const newSelectedId = fileIds[selectedIndex];

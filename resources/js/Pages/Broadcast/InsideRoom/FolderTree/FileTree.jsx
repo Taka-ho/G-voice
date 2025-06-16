@@ -10,6 +10,7 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
     setTreeData,
     broadcastingRoomId,
     fileAndContents,
+    setFileContents,
   } = useAppData();
 
   const [expandedDirs, setExpandedDirs] = useState({});
@@ -63,7 +64,6 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
       children: node.type === 'directory' ? node.children : null,
     };
 
-    console.log('右クリックされたノード:', minimalNode);
     setContextMenu({ visible: true, x: event.clientX, y: event.clientY, targetNode: minimalNode });
   };
 
@@ -105,6 +105,51 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
     );
   };
 
+  const findNodeByPath = (node, path) => {
+    if (!node) return null;
+    if (node.path === path) return node;
+    if (Array.isArray(node.children)) {
+      for (let child of node.children) {
+        const found = findNodeByPath(child, path);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const handleRenameSuccess = (oldPath, newName, updatedTree) => {
+    const newPath = oldPath.replace(/[^/]+$/, newName);
+
+    setFileNames(prev =>
+      prev.map(file => {
+        if (file.path === oldPath) {
+          const updatedNode = findNodeByPath(updatedTree, newPath);
+          return updatedNode
+            ? { ...file, id: updatedNode.id, name: updatedNode.name, path: updatedNode.path }
+            : { ...file, name: newName, path: newPath };
+        }
+        const node = findNodeByPath(updatedTree, file.path);
+        return node ? { ...file, id: node.id } : file;
+      })
+    );
+
+    setFileContents(prev => {
+      const updated = { ...prev };
+      Object.entries(prev).forEach(([key, value]) => {
+        if (value.path === oldPath) {
+          delete updated[key];
+          const updatedNode = findNodeByPath(updatedTree, newPath);
+          if (updatedNode) {
+            updated[updatedNode.id] = { ...value, name: updatedNode.name, path: updatedNode.path, id: updatedNode.id };
+          } else {
+            updated[key] = { ...value, name: newName, path: newPath };
+          }
+        }
+      });
+      return updated;
+    });
+  };
+
   if (!treeData) return <div>Loading tree...</div>;
 
   return (
@@ -119,6 +164,7 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
           y={contextMenu.y}
           targetNode={contextMenu.targetNode}
           onClose={() => setContextMenu({ visible: false, x: 0, y: 0, targetNode: null })}
+          onRename={handleRenameSuccess}
         />
       )}
     </div>

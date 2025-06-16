@@ -2,7 +2,7 @@ import React, { useEffect, useRef, forwardRef } from 'react';
 import axios from 'axios';
 import { useAppData } from '../../Contexts/AppDataContext';
 
-const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
+const ContextMenu = forwardRef(({ x, y, targetNode, onClose, onRename }, ref) => {
   const { broadcastingRoomId, setTreeData } = useAppData();
 
   const requestServerChange = async (type, payload) => {
@@ -28,7 +28,7 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
         setTreeData(updatedTree);
       }
   
-      return success;
+      return { success, updatedTree };
     } catch (err) {
       console.error('ContextMenu API Error:', err);
       return false;
@@ -39,20 +39,25 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
     const newName = prompt('新しい名前を入力してください', targetNode.name);
     if (!newName || newName === targetNode.name) return;
 
-    const success = await requestServerChange('rename', {
+    const { success, updatedTree } = await requestServerChange('rename', {
       oldPath: targetNode.path,
       newName,
       isFolder: !!targetNode.children,
     });
 
-    if (success) onClose();
+    if (success) {
+      if (onRename) {
+        onRename(targetNode.path, newName, updatedTree);
+      }
+      onClose();
+    }
   };
 
   const handleDelete = async () => {
     const confirmed = confirm(`${targetNode.name} を削除しますか？`);
     if (!confirmed) return;
 
-    const success = await requestServerChange('delete', {
+    const { success } = await requestServerChange('delete', {
       path: targetNode.path,
       isFolder: !!targetNode.children,
     });
@@ -64,7 +69,7 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
     const fileName = prompt('新しいファイル名を入力してください', 'NewFile.txt');
     if (!fileName) return;
 
-    const success = await requestServerChange('addFile', {
+    const { success } = await requestServerChange('addFile', {
       parentPath: targetNode.path,
       name: fileName,
     });
@@ -76,7 +81,7 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
     const folderName = prompt('新しいフォルダ名を入力してください', 'NewFolder');
     if (!folderName) return;
 
-    const success = await requestServerChange('addFolder', {
+    const { success } = await requestServerChange('addFolder', {
       parentPath: targetNode.path,
       name: folderName,
     });
