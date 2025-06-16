@@ -8,15 +8,15 @@ export const watchAndBroadcastDiff = async (
   redis: any,
   containerId: string,
   rootPath: string,
-  roomId: string,
+  broadcastingRoomId: string,
   ws: WebSocket
 ) => {
-  if (roomWatchers.has(roomId)) {
-    console.log(`[watch] Already watching room: ${roomId}, skipping duplicate watcher.`);
+  if (roomWatchers.has(broadcastingRoomId)) {
+    console.log(`[watch] Already watching room: ${broadcastingRoomId}, skipping duplicate watcher.`);
     return;
   }
 
-  const redisKey = `g_voice_database_file_tree_cache:${roomId}`;
+  const redisKey = `g_voice_database_file_tree_cache:${broadcastingRoomId}`;
 
   const loop = async () => {
     try {
@@ -29,28 +29,28 @@ export const watchAndBroadcastDiff = async (
         ws.send(JSON.stringify({
           type: 'fileTreeUpdate',
           data: currentTree,
-          broadcastingRoomId: roomId,
+          broadcastingRoomId: broadcastingRoomId,
         }));
 
         await redis.set(redisKey, JSON.stringify(currentTree));
       }
     } catch (error: any) {
-      console.error(`watchAndBroadcastDiff failed for room ${roomId}:`, error.message);
+      console.error(`watchAndBroadcastDiff failed for room ${broadcastingRoomId}:`, error.message);
     } finally {
       const timer = setTimeout(loop, 1000);
-      roomWatchers.set(roomId, timer);
+      roomWatchers.set(broadcastingRoomId, timer);
     }
   };
 
-  console.log(`[watch] Starting watcher for room: ${roomId}`);
+  console.log(`[watch] Starting watcher for room: ${broadcastingRoomId}`);
   loop();
 };
 
-export const stopRoomWatchLoop = (roomId: string) => {
-  const timer = roomWatchers.get(roomId);
+export const stopRoomWatchLoop = (broadcastingRoomId: string) => {
+  const timer = roomWatchers.get(broadcastingRoomId);
   if (timer) {
     clearTimeout(timer);
-    roomWatchers.delete(roomId);
-    console.log(`[watch] Stopped watcher for room: ${roomId}`);
+    roomWatchers.delete(broadcastingRoomId);
+    console.log(`[watch] Stopped watcher for room: ${broadcastingRoomId}`);
   }
 };

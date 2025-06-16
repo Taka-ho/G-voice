@@ -13,8 +13,8 @@ export const validateWebSocketMessage = (message: string) => {
   return parsed;
 };
 
-export const getContainerIdFromRedis = async (redis: any, roomId: string): Promise<string | null> => {
-  const key = `g_voice_database_broadcast:${roomId}`;
+export const getContainerIdFromRedis = async (redis: any, broadcastingRoomId: string): Promise<string | null> => {
+  const key = `g_voice_database_broadcast:${broadcastingRoomId}`;
   const redisData = await redis.hgetall(key);
   return redisData.containerId || null;
 };
