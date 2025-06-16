@@ -1,15 +1,11 @@
 import express from 'express';
-import {
-  getContainerIdFromRedis,
-  execCommand,
-  getDockerFileTree,
-  moveFile,
-} from './wsUtils';
+import { getContainerIdFromRedis, execCommand, getDockerFileTree, moveFile } from './wsUtils';
 
 const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { type, broadcastingRoomId, payload } = req.body;
+
   if (!broadcastingRoomId || !type || !payload) {
     return res.status(400).json({ success: false, message: 'Invalid request body' });
   }
@@ -23,20 +19,45 @@ router.post('/', async (req, res) => {
     }
 
     switch (type) {
-      case 'addFile':
-        await execCommand(containerId, ['sh', '-c', `touch "${payload.parentPath}/${payload.name}"`]);
-        break;
-
-      case 'addFolder':
-        await execCommand(containerId, ['sh', '-c', `mkdir -p "${payload.parentPath}/${payload.name}"`]);
-        break;
-
-      case 'rename': {
-        const newPath = payload.oldPath.replace(/[^/]+$/, payload.newName);
-        await moveFile(containerId, payload.oldPath, newPath);
+      case 'addFile': {
+        const checkPath = `${payload.parentPath.replace(/\/$/, '')}/${payload.name}`;
+        try {
+          await execCommand(containerId, ['sh', '-c', `[ -e "${checkPath}" ]`]);
+          return res.status(400).json({
+            success: false,
+            message: '同名のファイルまたはフォルダがすでに存在します。',
+          });
+        } catch {
+          await execCommand(containerId, ['sh', '-c', `touch "${checkPath}"`]);
+        }
         break;
       }
-
+      case 'addFolder': {
+        const checkPath = `${payload.parentPath.replace(/\/$/, '')}/${payload.name}`;
+        try {
+          await execCommand(containerId, ['sh', '-c', `[ -e "${checkPath}" ]`]);
+          return res.status(400).json({
+            success: false,
+            message: '同名のファイルまたはフォルダがすでに存在します。',
+          });
+        } catch {
+          await execCommand(containerId, ['sh', '-c', `mkdir -p "${checkPath}"`]);
+        }
+        break;
+      }
+      case 'rename': {
+        const newPath = payload.oldPath.replace(/[^/]+$/, payload.newName);
+        try {
+          await execCommand(containerId, ['sh', '-c', `[ -e "${newPath}" ]`]);
+          return res.status(400).json({
+            success: false,
+            message: '同じ場所に同名のファイルまたはフォルダがすでに存在します。',
+          });
+        } catch {
+          await moveFile(containerId, payload.oldPath, newPath);
+        }
+        break;
+      }
       case 'delete': {
         const cmd = payload.isFolder
           ? `rm -rf "${payload.path}"`
@@ -44,7 +65,6 @@ router.post('/', async (req, res) => {
         await execCommand(containerId, ['sh', '-c', cmd]);
         break;
       }
-
       default:
         return res.status(400).json({ success: false, message: 'Unknown operation type' });
     }
@@ -55,13 +75,14 @@ router.post('/', async (req, res) => {
       success: true,
       updatedTree,
     });
-    } catch (error) {
-        console.error('fs-operation error:', (error as Error).message);
-        res.status(500).json({
-        success: false,
-        message: (error as Error).message,
-        });
-    }
+  } catch (error) {
+    const errMsg = (error instanceof Error) ? error.message : String(error);
+    console.error('fs-operation error:', errMsg);
+    res.status(500).json({
+      success: false,
+      message: errMsg,
+    });
+  }  
 });
 
 export default router;
