@@ -8,9 +8,15 @@ import './css/CommentList.css';
 import './css/Terminal.css';
 
 const EditorComponents = ({ selectedFiles }) => {
-  const { fileContents, setFileContents } = useAppData();
+  const { fileContents, setFileContents, treeData } = useAppData();
   const [selectedFileId, setSelectedFileId] = useState('');
   const [fileIds, setFileIds] = useState([]);
+  const [currentFiles, setCurrentFiles] = useState([]);
+
+  useEffect(() => {
+    console.log('Current Files:', currentFiles);
+  }, [currentFiles]);
+  
 
   useEffect(() => {
     if (!selectedFiles || selectedFiles.length === 0) return;
@@ -33,10 +39,39 @@ const EditorComponents = ({ selectedFiles }) => {
       return updated;
     });
 
+    setCurrentFiles(selectedFiles);
+
     if (!selectedFileId && newFileIds.length > 0) {
       setSelectedFileId(newFileIds[0]);
     }
-  }, [selectedFiles]);
+  }, [selectedFiles,]);
+
+  useEffect(() => {
+    if (!treeData || currentFiles.length === 0) return;
+
+    const findNodeById = (node, id) => {
+      if (!node) return null;
+      if (node.id === id) return node;
+      if (Array.isArray(node.children)) {
+        for (let child of node.children) {
+          const found = findNodeById(child, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const updated = currentFiles.map(file => {
+      const updatedNode = findNodeById(treeData, file.id);
+      return updatedNode ? {
+        ...file,
+        name: updatedNode.name,
+        path: updatedNode.path,
+      } : file;
+    });
+
+    setCurrentFiles(updated);
+  }, [treeData, selectedFiles]);
 
   const handleOnChange = useCallback((newValue, fileId) => {
     if (!fileId) return;
@@ -55,8 +90,8 @@ const EditorComponents = ({ selectedFiles }) => {
   };
 
   if (
-    !selectedFiles ||
-    selectedFiles.length === 0 ||
+    !currentFiles ||
+    currentFiles.length === 0 ||
     !selectedFileId ||
     !fileContents[selectedFileId]
   ) {
@@ -70,11 +105,11 @@ const EditorComponents = ({ selectedFiles }) => {
         selectedIndex={fileIds.indexOf(selectedFileId)}
       >
         <TabList>
-          {selectedFiles.map(file => (
+          {currentFiles.map(file => (
             <Tab key={file.id}>{file.name}</Tab>
           ))}
         </TabList>
-        {selectedFiles.map(file => (
+        {currentFiles.map(file => (
           <TabPanel key={file.id}>
             <div className="editor-space">
               <MonacoEditor

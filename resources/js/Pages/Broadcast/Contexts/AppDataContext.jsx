@@ -40,6 +40,7 @@ export const AppDataProvider = ({ children }) => {
       ...prev,
       [fileId]: { name: fileName, content: newContent, path: path },
     }));
+    console.log(fileContents);
   }, []);
 
   const contextValue = useMemo(

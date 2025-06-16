@@ -10,7 +10,6 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { type, broadcastingRoomId, payload } = req.body;
-  console.log(payload);
   if (!broadcastingRoomId || !type || !payload) {
     return res.status(400).json({ success: false, message: 'Invalid request body' });
   }
