@@ -10,30 +10,26 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose, onRename }, ref) =>
       const protocol = window.location.protocol;
       const hostname = window.location.hostname;
       const port = '3000';
-  
       const url = `${protocol}//${hostname}:${port}/api/fs-operation`;
-    
+  
       const res = await axios.post(url, {
         type,
         broadcastingRoomId,
         payload,
-      }, {
-        withCredentials: true
-      });
+      }, { withCredentials: true });
   
-      const success = res.data.success;
-      const updatedTree = res.data.updatedTree;
-  
+      const { success, updatedTree, message } = res.data;
       if (success && updatedTree) {
         setTreeData(updatedTree);
       }
-  
-      return { success, updatedTree };
+      return { success, updatedTree, message };
     } catch (err) {
-      console.error('ContextMenu API Error:', err);
-      return false;
+      if (err.response && err.response.data && err.response.data.message) {
+        return { success: false, updatedTree: null, message: err.response.data.message };
+      }
+      return { success: false, updatedTree: null, message: 'APIエラーが発生しました' };
     }
-  };  
+  };   
 
   const handleRename = async () => {
     const newName = prompt('新しい名前を入力してください', targetNode.name);
