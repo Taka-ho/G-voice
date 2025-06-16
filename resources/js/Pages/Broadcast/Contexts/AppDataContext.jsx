@@ -34,13 +34,12 @@ export const AppDataProvider = ({ children }) => {
       .then(data => setComments(prev => [...prev, data]))
       .catch(() => {});
     }, []);
-
+    console.log(fileContents);
   const updateFileContents = useCallback((fileId, fileName, newContent, path) => {
     setFileContents(prev => ({
       ...prev,
       [fileId]: { name: fileName, content: newContent, path: path },
     }));
-    console.log(fileContents);
   }, []);
 
   const contextValue = useMemo(
