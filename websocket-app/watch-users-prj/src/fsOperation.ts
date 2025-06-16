@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
           return res.status(400).json({
             success: false,
             message: '同名のファイルまたはフォルダがすでに存在します。',
-          });
+          });          
         } catch {
           await execCommand(containerId, ['sh', '-c', `mkdir -p "${checkPath}"`]);
         }
@@ -51,8 +51,9 @@ router.post('/', async (req, res) => {
           await execCommand(containerId, ['sh', '-c', `[ -e "${newPath}" ]`]);
           return res.status(400).json({
             success: false,
-            message: '同じ場所に同名のファイルまたはフォルダがすでに存在します。',
+            message: '同名のファイルまたはフォルダがすでに存在します。',
           });
+          
         } catch {
           await moveFile(containerId, payload.oldPath, newPath);
         }
