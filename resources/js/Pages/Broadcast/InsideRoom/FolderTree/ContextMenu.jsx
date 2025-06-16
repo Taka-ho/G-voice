@@ -68,24 +68,32 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose, onRename }, ref) =>
   const handleAddFile = async () => {
     const fileName = prompt('新しいファイル名を入力してください', 'NewFile.txt');
     if (!fileName) return;
-
-    const { success } = await requestServerChange('addFile', {
+  
+    const { success, updatedTree, message } = await requestServerChange('addFile', {
       parentPath: targetNode.path,
       name: fileName,
     });
 
+    if (!success && message) {
+      alert(message);
+      return;
+    }
     if (success) onClose();
   };
 
   const handleAddFolder = async () => {
     const folderName = prompt('新しいフォルダ名を入力してください', 'NewFolder');
     if (!folderName) return;
-
-    const { success } = await requestServerChange('addFolder', {
+  
+    const { success, updatedTree, message } = await requestServerChange('addFolder', {
       parentPath: targetNode.path,
       name: folderName,
     });
 
+    if (!success && message) {
+      alert(message);
+      return;
+    }
     if (success) onClose();
   };
 
