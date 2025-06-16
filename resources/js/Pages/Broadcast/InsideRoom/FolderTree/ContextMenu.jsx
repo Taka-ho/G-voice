@@ -12,14 +12,7 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
       const port = '3000';
   
       const url = `${protocol}//${hostname}:${port}/api/fs-operation`;
-  
-      console.log('[POST] URL:', url);
-      console.log('[POST] Body:', {
-        type,
-        broadcastingRoomId,
-        payload,
-      });
-  
+    
       const res = await axios.post(url, {
         type,
         broadcastingRoomId,
@@ -43,7 +36,6 @@ const ContextMenu = forwardRef(({ x, y, targetNode, onClose }, ref) => {
   };  
 
   const handleRename = async () => {
-    console.log(targetNode.name);
     const newName = prompt('新しい名前を入力してください', targetNode.name);
     if (!newName || newName === targetNode.name) return;
 
