@@ -1,6 +1,10 @@
 import React from 'react';
-import '.././css/CommentList.css';
+import '../css/CommentList.css';
+
 const CommentList = ({ pusherComments, comments }) => {
+  // commentsがnullまたはundefinedの場合は空の配列として扱う
+  const safeComments = comments || [];
+
   return (
     <div className='comment-list'>
       <ul>
@@ -12,7 +16,7 @@ const CommentList = ({ pusherComments, comments }) => {
             </li>
           ))
         ) : (
-          comments.map(comment => (
+          safeComments.map(comment => (
             <li key={comment.id}>
               <p>{comment.comment}</p>
               {/* 他のプロパティも必要に応じて表示 */}

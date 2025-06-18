@@ -1,142 +1,172 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import { useAppData } from '../../Contexts/AppDataContext';
+import useWebSocket from './useWebSocket';
+import FileIcon from './FileIcon';
 import ContextMenu from './ContextMenu';
-import '../css/FileTree.scss';
 
-const FileTree = ({ fileNames, setFileNames, fileAndContents, updateFileContents }) => {
-  const [treeData, setTreeData] = useState(() => {
-    const storedTreeData = localStorage.getItem('treeData');
-    return storedTreeData
-      ? JSON.parse(storedTreeData)
-      : {
-          id: 1,
-          name: 'root',
-          path: 'root',
-          children: [],
-        };
-  });
+const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
+  const {
+    treeData,
+    setTreeData,
+    broadcastingRoomId,
+    fileAndContents,
+    setFileContents,
+  } = useAppData();
 
-  const [pathBeforeChange, setPathBeforeChange] = useState('');
-  const [pathAfterChange, setPathAfterChange] = useState('');
-  const [pathOfDeleteFile, setPathOfDeleteFile] = useState('');
+  const [expandedDirs, setExpandedDirs] = useState({});
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, targetNode: null });
+  const contextMenuRef = useRef(null);
 
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
-    const queryString = window.location.search;
-    const params = new URLSearchParams(queryString);
-    const containerId = params.get('containerId');
-    ws.onopen = () => {
-      const message = JSON.stringify({ treeData, containerId, fileAndContents, pathBeforeChange, pathAfterChange, pathOfDeleteFile });
-      ws.send(message);
-    };
-
-    ws.onmessage = (event) => {
-      const fileEvent = JSON.parse(event.data);
-      if (fileEvent.type === 'add') {
-        // Add file to the file tree
-      } else if (fileEvent.type === 'change') {
-        // Update file content
-      } else if (fileEvent.type === 'remove') {
-        setTreeData((prevTreeData) => deleteNodeById(prevTreeData, fileEvent.fileName));
-      }
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [treeData, fileAndContents]);
-
-  const deleteNodeById = (node, id) => {
-    if (node.id === id) {
-      return null;
+  const handleWebSocketMessage = useCallback((message) => {
+    if (message.type === 'file_tree') {
+      setTreeData(message.data);
+    } else if (message.type === 'file_system_event' && message.payload?.data?.updatedTree) {
+      setTreeData(message.payload.data.updatedTree);
     }
+  }, [setTreeData]);
 
-    if (node.children && node.children.length > 0) {
-      const updatedChildren = node.children
-        .map((child) => {
-          const updatedChild = deleteNodeById(child, id);
-          return updatedChild !== null ? updatedChild : null;
-        })
-        .filter((child) => child !== null);
-
-      return { ...node, children: updatedChildren };
-    }
-
-    return node;
-  };
+  const ws = useWebSocket(handleWebSocketMessage);
 
   const clickedFile = (clickedFile) => {
-    if (!clickedFile.children) {
-      const openedFile = { id: clickedFile.id, name: clickedFile.name, path: clickedFile.path };
+    if (clickedFile.children) {
+      setExpandedDirs(prev => ({
+        ...prev,
+        [clickedFile.path]: !prev[clickedFile.path],
+      }));
+    } else {
+      const openedFile = {
+        id: clickedFile.id,
+        name: clickedFile.name,
+        path: clickedFile.path,
+      };
+
       if (!fileNames.some((file) => file.id === openedFile.id || file.name === openedFile.name)) {
         setFileNames((prevFileNames) => [...prevFileNames, openedFile]);
-        updateFileContents(openedFile.name, fileAndContents[openedFile.name] || '');
+
+        const content = fileAndContents?.[openedFile.name]?.content ?? '';
+        updateFileContents(openedFile.id, openedFile.name, content, openedFile.path);
       }
     }
   };
 
-  const handleFileDeleted = (node) => {
-    const pathOfDeleteFile = node.path; // node.pathを取得
-    setPathOfDeleteFile(pathOfDeleteFile); // pathOfDeleteFileをセット
-    const updatedTreeData = deleteNodeById(treeData, node.id);
-    if (updatedTreeData) {
-      setTreeData(updatedTreeData);
-      localStorage.setItem('treeData', JSON.stringify(updatedTreeData));
-    }
+  const handleContextMenu = (event, node) => {
+    event.preventDefault();
+    event.stopPropagation(); // prevent bubbling to parent nodes
 
-    // WebSocketを使用して削除処理を送信
-    const ws = new WebSocket('ws://localhost:8080');
-    ws.onopen = () => {
-      const message = JSON.stringify({ action: 'delete', path: pathOfDeleteFile });
-      ws.send(message);
+    // only trigger once for the direct element that was right-clicked
+    if (event.currentTarget !== event.target && !event.currentTarget.contains(event.target)) return;
+
+    const minimalNode = {
+      id: node.id,
+      name: node.name,
+      path: node.path,
+      type: node.type,
+      children: node.type === 'directory' ? node.children : null,
     };
 
-    // pathOfDeleteFileを空に戻す
-    setPathOfDeleteFile('');
+    setContextMenu({ visible: true, x: event.clientX, y: event.clientY, targetNode: minimalNode });
   };
 
-  const handleFileRenamed = (updatedNode) => {
-    const updateNode = (node, updatedNode) => {
-      if (node.id === updatedNode.id) {
-        return {
-          ...node,
-          name: updatedNode.name,
-          path: updatedNode.path,
-        };
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu({ visible: false, x: 0, y: 0, targetNode: null });
       }
-
-      if (node.children && node.children.length > 0) {
-        const updatedChildren = node.children.map((child) => updateNode(child, updatedNode));
-        return { ...node, children: updatedChildren };
-      }
-      return node;
     };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
-    setTreeData((prevTreeData) => {
-      const updatedTree = updateNode(prevTreeData, updatedNode);
-      localStorage.setItem('treeData', JSON.stringify(updatedTree));
-      return updatedTree;
+  const renderTree = (node, indent = 0) => {
+    const isFolder = node.children && Array.isArray(node.children);
+    const isOpen = expandedDirs[node.path];
+
+    return (
+      <li key={node.id} style={{ marginLeft: `${indent}rem` }}>
+        <div
+          className="tree-item"
+          onClick={() => clickedFile(node)}
+          onContextMenu={(e) => handleContextMenu(e, node)}
+          style={{ cursor: 'pointer', padding: '2px 6px', display: 'flex', alignItems: 'center' }}
+        >
+          {isFolder ? (
+            <span style={{ marginRight: '4px' }}>{isOpen ? '📂' : '📁'}</span>
+          ) : (
+            <span style={{ marginRight: '4px' }}><FileIcon fileName={node.name} /></span>
+          )}
+          {node.name}
+        </div>
+        {isFolder && isOpen && (
+          <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
+            {node.children.map(child => renderTree(child, indent + 1))}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
+  const findNodeByPath = (node, path) => {
+    if (!node) return null;
+    if (node.path === path) return node;
+    if (Array.isArray(node.children)) {
+      for (let child of node.children) {
+        const found = findNodeByPath(child, path);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const handleRenameSuccess = (oldPath, newName, updatedTree) => {
+    const newPath = oldPath.replace(/[^/]+$/, newName);
+
+    setFileNames(prev =>
+      prev.map(file => {
+        if (file.path === oldPath) {
+          const updatedNode = findNodeByPath(updatedTree, newPath);
+          return updatedNode
+            ? { ...file, id: updatedNode.id, name: updatedNode.name, path: updatedNode.path }
+            : { ...file, name: newName, path: newPath };
+        }
+        const node = findNodeByPath(updatedTree, file.path);
+        return node ? { ...file, id: node.id } : file;
+      })
+    );
+
+    setFileContents(prev => {
+      const updated = { ...prev };
+      Object.entries(prev).forEach(([key, value]) => {
+        if (value.path === oldPath) {
+          delete updated[key];
+          const updatedNode = findNodeByPath(updatedTree, newPath);
+          if (updatedNode) {
+            updated[updatedNode.id] = { ...value, name: updatedNode.name, path: updatedNode.path, id: updatedNode.id };
+          } else {
+            updated[key] = { ...value, name: newName, path: newPath };
+          }
+        }
+      });
+      return updated;
     });
   };
 
+  if (!treeData) return <div>Loading tree...</div>;
+
   return (
-    <div style={{ display: 'flex-grow' }}>
-      <div style={{ marginRight: '1rem' }}>
-        <ul>
-          <ContextMenu
-            data={treeData}
-            indent={0}
-            onDelete={handleFileDeleted}
-            onClick={clickedFile}
-            onFileRenamed={handleFileRenamed}
-            setTreeData={setTreeData}
-            pathBeforeChange={pathBeforeChange}
-            pathAfterChange={pathAfterChange}
-            setPathBeforeChange={setPathBeforeChange}
-            setPathAfterChange={setPathAfterChange}
-            setPathOfDeleteFile={setPathOfDeleteFile}
-          />
-        </ul>
-      </div>
+    <div style={{ overflowY: 'auto' }}>
+      <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
+        {renderTree(treeData)}
+      </ul>
+      {contextMenu.visible && contextMenu.targetNode && (
+        <ContextMenu
+          ref={contextMenuRef}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          targetNode={contextMenu.targetNode}
+          onClose={() => setContextMenu({ visible: false, x: 0, y: 0, targetNode: null })}
+          onRename={handleRenameSuccess}
+        />
+      )}
     </div>
   );
 };

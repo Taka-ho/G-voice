@@ -15,5 +15,6 @@ class SeederBroadcastingRoomsTable extends Seeder
     {
         //
         \App\Models\BroadcastingRoom::factory()->count(100)->create();
+
     }
 }

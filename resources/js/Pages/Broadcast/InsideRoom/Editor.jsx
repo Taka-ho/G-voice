@@ -1,105 +1,140 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import MonacoEditor from '@monaco-editor/react';
+import { useAppData } from '../Contexts/AppDataContext';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import MonacoEditor from 'react-monaco-editor';
 import './css/Editor.css';
 import './css/Tab.css';
+import './css/CommentList.css';
+import './css/Terminal.css';
 
-const Editor = ({ selectedFiles, updateFileContents }) => {
-  const [fileNames, setFileNames] = useState([]);
-  const [fileContents, setFileContents] = useState({});
-  const [selectedFileName, setSelectedFileName] = useState('');
-  const [fileIds, setFileIds] = useState({});
+const EditorComponents = ({ selectedFiles }) => {
+  const { fileContents, setFileContents, treeData, updateFileContents } = useAppData();
+  const [selectedFileId, setSelectedFileId] = useState('');
+  const [currentFiles, setCurrentFiles] = useState([]);
 
-  // Sync selected files with Editor
+  // ファイル追加/削除時に現在のタブ一覧をIDで追従
   useEffect(() => {
-    if (selectedFiles.length === 0) return;
+    if (!selectedFiles || selectedFiles.length === 0) return;
 
-    const newFileNames = selectedFiles.map((file) => file.name);
-    setFileNames(newFileNames);
-
-    const newFileContents = {};
-    const newFileIds = {};
-    selectedFiles.forEach((file) => {
-      if (!fileContents[file.name]) {
-        newFileContents[file.name] = file.content || '';
-      }
-      newFileIds[file.name] = file.id;
+    // fileContentsも常にIDで管理
+    setFileContents(prevContents => {
+      const updated = { ...prevContents };
+      selectedFiles.forEach(file => {
+        if (!(file.id in updated)) {
+          updated[file.id] = {
+            id: file.id,
+            name: file.name,
+            path: file.path,
+            content: file.content ?? '',
+          };
+        }
+      });
+      return updated;
     });
-    setFileContents((prevContents) => ({ ...prevContents, ...newFileContents }));
-    setFileIds((prevIds) => ({ ...prevIds, ...newFileIds }));
+
+    setCurrentFiles(prevFiles => {
+      // 既存のID順序と内容を維持しつつ、新規ファイルも末尾追加
+      const ids = selectedFiles.map(f => f.id);
+      const next = [];
+      ids.forEach(id => {
+        const existing = prevFiles.find(f => f.id === id);
+        const sel = selectedFiles.find(f => f.id === id);
+        next.push(existing ? { ...existing, ...sel } : sel);
+      });
+      return next;
+    });
+
+    // 新規追加時のみ最初のファイルを開く
+    if (!selectedFileId && selectedFiles.length > 0) {
+      setSelectedFileId(selectedFiles[0].id);
+    } else if (
+      selectedFileId &&
+      !selectedFiles.some(file => file.id === selectedFileId)
+    ) {
+      // 現在選択中のファイルが削除された場合、先頭にフォーカス
+      setSelectedFileId(selectedFiles[0]?.id || '');
+    }
   }, [selectedFiles]);
 
-  const handleOnChange = (newValue, fileName) => {
-    setFileContents((prevContents) => {
-      const updatedContents = {
-        ...prevContents,
-        [fileName]: newValue,
-      };
-      const fileId = fileIds[fileName];
-      
-      // Save updated contents in localStorage
-      const treeData = JSON.parse(localStorage.getItem('treeData') || '{}');
-      if (treeData && treeData.children) {
-        const fileToUpdate = treeData.children.find((file) => file.id === fileId);
-        if (fileToUpdate) {
-          fileToUpdate.content = newValue;
-          localStorage.setItem('treeData', JSON.stringify(treeData));
+  // ファイル名やpathがtreeDataで変更されたらcurrentFilesをIDで追従
+  useEffect(() => {
+    if (!treeData || currentFiles.length === 0) return;
+
+    const findNodeById = (node, id) => {
+      if (!node) return null;
+      if (node.id === id) return node;
+      if (Array.isArray(node.children)) {
+        for (let child of node.children) {
+          const found = findNodeById(child, id);
+          if (found) return found;
         }
       }
+      return null;
+    };
 
-      // Trigger a storage event to notify other components
-      const storageEvent = new Event('storage');
-      window.dispatchEvent(storageEvent);
-
-      // Update file contents in parent component
-      updateFileContents(fileId, fileName, newValue);
-
-      return updatedContents;
-    });
-  };
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const updatedTree = JSON.parse(localStorage.getItem('treeData') || '{}');
-  
-      if (updatedTree && updatedTree.children) {
-        const newFileNames = selectedFiles.map((file) => {
-          const updatedFile = updatedTree.children.find((item) => item.id === file.id);
-          return updatedFile ? updatedFile.name : file.name;
-        });
-
-        setFileNames(newFileNames);
+    const updated = currentFiles.map(file => {
+      const updatedNode = findNodeById(treeData, file.id);
+      if (updatedNode) {
+        // 常にファイル名・パスを同期
+        updateFileContents(file.id, updatedNode.name, fileContents[file.id]?.content, updatedNode.path);
+        return {
+          ...file,
+          name: updatedNode.name,
+          path: updatedNode.path,
+        };
       }
-    };
-  
-    window.addEventListener('storage', handleStorageChange);
-  
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedFiles]);
+      return file;
+    });
 
-  // Handle tab select
+    setCurrentFiles(updated);
+  }, [treeData]);
+
+  const handleOnChange = useCallback((newValue, fileId) => {
+    if (!fileId) return;
+    setFileContents(prevContents => ({
+      ...prevContents,
+      [fileId]: {
+        ...(prevContents[fileId] || {}),
+        content: newValue,
+      },
+    }));
+  }, [setFileContents]);
+
+  const fileIds = currentFiles.map(f => f.id);
+
   const handleTabSelect = (selectedIndex) => {
-    setSelectedFileName(fileNames[selectedIndex]);
+    const newSelectedId = fileIds[selectedIndex];
+    setSelectedFileId(newSelectedId);
   };
+
+  if (
+    !currentFiles ||
+    currentFiles.length === 0 ||
+    !selectedFileId ||
+    !fileContents[selectedFileId]
+  ) {
+    return <div className="editor-container">Loading...</div>;
+  }
 
   return (
     <div className="editor-container">
-      <Tabs onSelect={handleTabSelect}>
+      <Tabs
+        onSelect={handleTabSelect}
+        selectedIndex={fileIds.indexOf(selectedFileId)}
+      >
         <TabList>
-          {fileNames.map((fileName) => (
-            <Tab key={fileName}>{fileName}</Tab>
+          {currentFiles.map(file => (
+            <Tab key={file.id}>{file.name}</Tab>
           ))}
         </TabList>
-        {fileNames.map((fileName) => (
-          <TabPanel key={fileName}>
+        {currentFiles.map(file => (
+          <TabPanel key={file.id}>
             <div className="editor-space">
               <MonacoEditor
+                value={fileContents[file.id]?.content ?? ''}
+                onChange={(value) => handleOnChange(value, file.id)}
                 language="javascript"
-                theme="vs"
-                value={fileContents[fileName]}
-                onChange={(newValue) => handleOnChange(newValue, fileName)}
+                options={{ fontSize: 14 }}
               />
             </div>
           </TabPanel>
@@ -109,4 +144,5 @@ const Editor = ({ selectedFiles, updateFileContents }) => {
   );
 };
 
+const Editor = React.memo(EditorComponents);
 export default Editor;

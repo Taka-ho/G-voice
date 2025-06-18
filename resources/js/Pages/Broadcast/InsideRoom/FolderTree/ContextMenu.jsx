@@ -1,200 +1,134 @@
-import React, { useState, useRef, useEffect } from 'react';
-import 'devicon/devicon.min.css';
-import FileIcon from './FileIcon';
+import React, { useEffect, useRef, forwardRef } from 'react';
+import axios from 'axios';
+import { useAppData } from '../../Contexts/AppDataContext';
 
-const ContextMenu = ({
-  data,
-  indent,
-  onDelete,
-  onClick,
-  onFileRenamed,
-  setTreeData,
-  pathBeforeChange,
-  pathAfterChange,
-  setPathBeforeChange,
-  setPathAfterChange,
-  setPathOfDeleteFile,
-}) => {
-  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
-  const popupRef = useRef(null);
-  const [rootDirName, setRootDirName] = useState('');
+const ContextMenu = forwardRef(({ x, y, targetNode, onClose, onRename }, ref) => {
+  const { broadcastingRoomId, setTreeData } = useAppData();
+
+  const requestServerChange = async (type, payload) => {
+    try {
+      const protocol = window.location.protocol;
+      const hostname = window.location.hostname;
+      const port = '3000';
+      const url = `${protocol}//${hostname}:${port}/api/fs-operation`;
+  
+      const res = await axios.post(url, {
+        type,
+        broadcastingRoomId,
+        payload,
+      }, { withCredentials: true });
+  
+      const { success, updatedTree, message } = res.data;
+      if (success && updatedTree) {
+        setTreeData(updatedTree);
+      }
+      return { success, updatedTree, message };
+    } catch (err) {
+      if (err.response && err.response.data && err.response.data.message) {
+        return { success: false, updatedTree: null, message: err.response.data.message };
+      }
+      return { success: false, updatedTree: null, message: 'APIエラーが発生しました' };
+    }
+  };   
+
+  const handleRename = async () => {
+    const newName = prompt('新しい名前を入力してください', targetNode.name);
+    if (!newName || newName === targetNode.name) return;
+
+    const { success, updatedTree } = await requestServerChange('rename', {
+      oldPath: targetNode.path,
+      newName,
+      isFolder: !!targetNode.children,
+    });
+
+    if (success) {
+      if (onRename) {
+        onRename(targetNode.path, newName, updatedTree);
+      }
+      onClose();
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = confirm(`${targetNode.name} を削除しますか？`);
+    if (!confirmed) return;
+
+    const { success } = await requestServerChange('delete', {
+      path: targetNode.path,
+      isFolder: !!targetNode.children,
+    });
+
+    if (success) onClose();
+  };
+
+  const handleAddFile = async () => {
+    const fileName = prompt('新しいファイル名を入力してください', 'NewFile.txt');
+    if (!fileName) return;
+  
+    const { success, updatedTree, message } = await requestServerChange('addFile', {
+      parentPath: targetNode.path,
+      name: fileName,
+    });
+
+    if (!success && message) {
+      alert(message);
+      return;
+    }
+    if (success) onClose();
+  };
+
+  const handleAddFolder = async () => {
+    const folderName = prompt('新しいフォルダ名を入力してください', 'NewFolder');
+    if (!folderName) return;
+  
+    const { success, updatedTree, message } = await requestServerChange('addFolder', {
+      parentPath: targetNode.path,
+      name: folderName,
+    });
+
+    if (!success && message) {
+      alert(message);
+      return;
+    }
+    if (success) onClose();
+  };
 
   useEffect(() => {
-    // localStorageからtreeDataを取得
-    const storedTreeData = localStorage.getItem('treeData');
-    if (storedTreeData) {
-      const treeData = JSON.parse(storedTreeData);
-      // 最上位の親要素のフォルダー名を取得
-      setRootDirName(treeData.name);
-    }
-  }, []);
-
-  const clickedFile = () => {
-    onClick(data);
-  };
-
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
-    closeContextMenu();
-  };
-
-  const closeContextMenu = () => {
-    document.body.addEventListener('click', documentClickHandler);
-  };
-
-  const documentClickHandler = (e) => {
-    if (popupRef.current && popupRef.current.contains(e.target)) return;
-    setContextMenu({ visible: false, x: 0, y: 0 });
-    document.body.removeEventListener('click', documentClickHandler);
-  };
-
-  const updateNodeById = (node, id, updatedNode) => {
-    if (node.id === id) {
-      return updatedNode;
-    }
-
-    if (node.children) {
-      const updatedChildren = node.children.map(child => updateNodeById(child, id, updatedNode));
-      return { ...node, children: updatedChildren };
-    }
-
-    return node;
-  };
-
-  const addFile = (parentNode) => {
-    // parentNode.path の先頭が rootDirName で始まる場合、重複を避ける
-    const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
-      ? `${parentNode.path}/NewFile.txt`
-      : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFile.txt`;
-    console.log(path);
-    const newFile = { id: Date.now(), name: 'NewFile.txt', content: '', path: path };
-    const updatedNode = {
-      ...parentNode,
-      children: [...(parentNode.children || []), newFile],
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
     };
-  
-    setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
-    setContextMenu({ visible: false, x: 0, y: 0 });
-  };
-    
-  const addFolder = (parentNode) => {
-    // parentNode.path の先頭が rootDirName で始まる場合、重複を避ける
-    const path = parentNode.path && parentNode.path.startsWith(`${rootDirName}/`)
-      ? `${parentNode.path}/NewFolder`
-      : `${rootDirName}${parentNode.path ? '/' + parentNode.path : ''}/NewFolder`;
-    console.log(path);
-    const newFolder = { id: Date.now(), name: 'NewFolder', children: [], path: path };
-    const updatedNode = {
-      ...parentNode,
-      children: [...(parentNode.children || []), newFolder],
-    };
-  
-    setTreeData((prevTreeData) => updateNodeById(prevTreeData, parentNode.id, updatedNode));
-    setContextMenu({ visible: false, x: 0, y: 0 });
-  };
-    
-  const renameItem = (node) => {
-    // 変更前のパスを保存
-    setPathBeforeChange(node.path);
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
-    const newName = prompt('Enter new name:', node.name);
-    if (newName !== null) {
-      const updatedNode = {
-        ...node,
-        name: newName,
-        path: node.path.replace(/\/[^/]+$/, `/${newName}`), // 新しいパスを計算
-      };
-
-      // 変更後のパスを保存
-      setPathAfterChange(updatedNode.path);
-
-      setTreeData((prevTreeData) => updateNodeById(prevTreeData, node.id, updatedNode));
-      onFileRenamed(updatedNode);
-    }
-    setContextMenu({ visible: false, x: 0, y: 0 });
-  };
-
-  const handleDelete = (node) => {
-    const pathOfDeleteTarget = node.path;
-    setPathOfDeleteFile(pathOfDeleteTarget); // pathを保存
-    onDelete(node); // 削除処理を呼び出す
-    setContextMenu({ visible: false, x: 0, y: 0 });
-  };
-
-  const isFolder = data.children && Array.isArray(data.children);
-  const contextMenuContent = contextMenu.visible && (
-    <div
-      ref={popupRef}
-      style={{
-        position: 'absolute',
-        top: isFolder ? contextMenu.y - 15 : contextMenu.y,
-        left: contextMenu.x,
-        border: '1px solid #ccc',
-        backgroundColor: '#fff',
-        padding: '4px',
-        zIndex: 1000,
-      }}
-    >
-
-      {isFolder ? (
-        <div className='folder-context-menu'>
-          <div className='contextMenu' onClick={() => renameItem(data)}>
-            名前の変更
-          </div>
-          <div className='contextMenu' onClick={() => addFile(data)}>
-            ファイルを追加する
-          </div>
-          <div className='contextMenu' onClick={() => addFolder(data)}>
-            フォルダの追加
-          </div>
-          <div className='contextMenu' onClick={() => handleDelete(data)}>
-            削除する
-          </div>
-        </div>
-      ) : (
-        <div className='file-context-menu'>
-          <div className='contextMenu' onClick={() => renameItem(data)}>
-            名前の変更
-          </div>
-          <div className='contextMenu' onClick={() => handleDelete(data)}>
-            削除する
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const isFolder = !!targetNode?.children;
 
   return (
-    <li style={{ marginLeft: `${indent}rem` }} onContextMenu={handleContextMenu}>
-      <div className='data' onClick={clickedFile} style={{ display: 'flex', alignItems: 'center' }}>
-        <FileIcon fileName={data.name} isFolder={isFolder} />
-        {data.name}
-      </div>
+    <div
+      ref={ref}
+      style={{
+        position: 'absolute',
+        top: y,
+        left: x,
+        border: '1px solid #ccc',
+        backgroundColor: '#fff',
+        zIndex: 9999,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        borderRadius: '6px',
+        width: 180,
+        padding: '4px 0',
+      }}
+    >
+      <div className="contextMenuItem" onClick={handleRename}>✏️ 名前を変更</div>
       {isFolder && (
-        <ul>
-          {data.children.map((child) => (
-            <ContextMenu
-              key={child.id}
-              data={child}
-              indent={indent + 0.5}
-              onDelete={onDelete}
-              onClick={onClick}
-              onFileRenamed={onFileRenamed}
-              setTreeData={setTreeData}
-              pathBeforeChange={pathBeforeChange}
-              pathAfterChange={pathAfterChange}
-              setPathBeforeChange={setPathBeforeChange}
-              setPathAfterChange={setPathAfterChange}
-              setPathOfDeleteFile={setPathOfDeleteFile}
-            />
-          ))}
-        </ul>
+        <>
+          <div className="contextMenuItem" onClick={handleAddFile}>📄 ファイルを追加</div>
+          <div className="contextMenuItem" onClick={handleAddFolder}>📁 フォルダを追加</div>
+        </>
       )}
-      {contextMenuContent}
-    </li>
+      <div className="contextMenuItem" onClick={handleDelete}>🗑️ 削除</div>
+    </div>
   );
-};
+});
 
 export default ContextMenu;

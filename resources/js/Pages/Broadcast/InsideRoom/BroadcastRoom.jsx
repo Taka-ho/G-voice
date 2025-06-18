@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AudioStreamer from './Header/AudioStreamer';
 import FileTree from './FolderTree/FileTree';
+import AudioStreamer from './Header/AudioStreamer';
 import Editor from './Editor';
 import TerminalComponent from './TerminalComponent';
 import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
-import Header from './Header/Header';  // 新しいHeaderコンポーネントをインポート
+import Header from './Header/Header';
 import './css/Editor.css';
+import { useAppData } from '../Contexts/AppDataContext';
+import { useParams } from 'react-router-dom';
 
 const usePusherComments = () => {
   const [pusherComments, setComments] = useState([]);
@@ -37,35 +39,100 @@ const usePusherComments = () => {
   return pusherComments;
 };
 
-const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndContents }) => {
+const BroadcastRoom = () => {
   const [fileNames, setFileNames] = useState([]);
-  const [selectedFileName, setSelectedFileName] = useState('');
   const pusherComments = usePusherComments();
 
   const [isMicOn, setMicOn] = useState(false);
   const [isBroadcasting, setBroadcasting] = useState(false);
   const [isSharing, setSharing] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState('');
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const { setBroadcastingRoomId } = useAppData();
 
   const toggleMic = () => setMicOn(!isMicOn);
   const toggleBroadcast = () => setBroadcasting(!isBroadcasting);
   const toggleShare = () => setSharing(!isSharing);
 
-  const handleEndBroadcast = () => {
-    if (window.confirm('Are you sure you want to end the broadcast?')) {
-      fetch('/api/broadcast/down', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-      })
-        .then((response) => response.json())
-        .catch((error) => {
-          console.error('Error:', error);
-        });
+  const {
+    fileAndContents,
+    updateFileContents,
+    comments,
+    addComment,
+    treeData,
+  } = useAppData();
+
+  const { broadcastingRoomId } = useParams();
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    if (broadcastingRoomId) {
+      setBroadcastingRoomId(broadcastingRoomId);
     }
-  };
+  }, [broadcastingRoomId]);
+
+  useEffect(() => {
+    if (
+      socketRef.current &&
+      socketRef.current.readyState === WebSocket.OPEN &&
+      treeData
+    ) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: 'update_tree',
+          data: treeData,
+        })
+      );
+    }
+  }, [treeData]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      const navType = performance.getEntriesByType('navigation')[0]?.type;
+      if (navType === 'reload') return;
+
+      navigator.sendBeacon(
+        '/broadcast/down',
+        new Blob(
+          [JSON.stringify({
+            reason: 'unload',
+            timestamp: new Date().toISOString(),
+            broadcastingRoomId,
+          })],
+          { type: 'application/json' }
+        )
+      );
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [broadcastingRoomId]);
+
+  useEffect(() => {
+    if (!treeData) return;
+
+    const findNodeByPath = (node, path) => {
+      if (!node) return null;
+      if (node.path === path) return node;
+      if (Array.isArray(node.children)) {
+        for (let child of node.children) {
+          const found = findNodeByPath(child, path);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    setFileNames(prev =>
+      prev.map(file => {
+        const node = findNodeByPath(treeData, file.path);
+        return node ? { ...file, id: node.id } : file;
+      })
+    );
+  }, [treeData]);
 
   return (
     <div className='all-space'>
@@ -79,7 +146,18 @@ const BroadcastRoom = ({ comments, addComment, updateFileContents, fileAndConten
         toggleShare={toggleShare} 
       />
 
-      <div style={{ display: 'flex', flex: 1 }}>
+      {showAlert && (
+        <ConfirmationAlert
+          message="配信を終了しますか？"
+          onConfirm={() => {
+            setShowAlert(false);
+            // ナビゲーション処理など
+          }}
+          onCancel={() => setShowAlert(false)}
+        />
+      )}
+
+      <div style={{ display: 'flex' }}>
         <FileTree
           fileNames={fileNames}
           setFileNames={setFileNames}

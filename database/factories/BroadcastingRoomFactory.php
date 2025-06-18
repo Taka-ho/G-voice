@@ -25,12 +25,13 @@ class BroadcastingRoomFactory extends Factory
     public function definition(): array
     {
         return [
-            'room_names' => fake()->unique()->name(),
-            'user_id' => function() {
-                return User::factory()->create()->id;
-            },
-            'room_explain' => fake()->realText(140),
-            'broadcasting_flag' => fake()->randomElement([0, 1]),
+            'user_id' => \App\Models\User::factory(), // ユーザーを自動的に生成
+            'room_names' => $this->faker->sentence(3),
+            'container_id' => Str::uuid(), // UUIDを生成
+            'room_explain' => $this->faker->text(140),
+            'broadcasting_flag' => $this->faker->randomElement([0, 1]), // 0または1をランダムに設定
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

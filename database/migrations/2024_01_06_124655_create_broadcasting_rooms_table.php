@@ -12,18 +12,19 @@ return new class extends Migration
     {
         Schema::create('broadcasting_rooms', function (Blueprint $table) {
             $table->id()->unique();
-
-            // users テーブルの外部キー関連付け
-            $table->unsignedBigInteger('user_id')->NotNull();
+    
+            $table->unsignedBigInteger('user_id')->notNull();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->string('room_names', 140)->NotNull();
+            $table->string('room_names', 140)->notNull();
+            $table->string('container_id', 64)->notNull()->unique();
             $table->string('room_explain', 140)->nullable();
-            $table->integer('broadcasting_flag')->NotNull();
-            $table->string('container_id', 64)->nullable()->unique();
+            $table->integer('broadcasting_flag')->notNull();
             $table->timestamps();
+    
         });
     }
-
+    
+    
     /**
      * Reverse the migrations.
      */
@@ -31,7 +32,6 @@ return new class extends Migration
     {
         // broadcasting_rooms の外部キー制約を解除してテーブルを削除
         if (Schema::hasTable('broadcasting_rooms')) {
-            Log::debug("broadcasting_roomsが存在する");
             Schema::table('broadcasting_rooms', function (Blueprint $table) {
                 $table->dropForeign(['user_id']); // 外部キーを削除
             });

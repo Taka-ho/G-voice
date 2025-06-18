@@ -3,7 +3,9 @@ FROM ubuntu:latest
 
 # PHP 8.2 PPAを追加
 RUN apt-get update && apt-get install -y software-properties-common && \
-    add-apt-repository ppa:ondrej/php && apt-get update
+    add-apt-repository ppa:ondrej/php && apt-get update && \
+    pecl install xdebug && \
+    docker-php-ext-enable xdebug
 
 # 必要なパッケージおよびPHP 8.2のインストール
 RUN apt-get install -y php8.2 php8.2-cli php8.2-fpm php8.2-zip php8.2-bcmath php8.2-intl php8.2-mysql php8.2-redis php8.2-curl \
@@ -20,6 +22,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Node.jsのインストール
 RUN curl -sL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs
 
+# Redisクライアントのインストール
+RUN git clone https://github.com/phpredis/phpredis.git /usr/src/php/ext/redis && \
+  docker-php-ext-install redis
+
 # 作業ディレクトリの設定
 WORKDIR /app
 
@@ -33,7 +39,8 @@ RUN composer update && composer install && composer require guzzlehttp/guzzle
 RUN composer require laravel/nova
 # Composer のオートロードの再生成
 RUN composer dump-autoload
-
+# Redisクライアントのインストール
+RUN composer require predis/predis
 # predis/predis パッケージの追加
 RUN composer require predis/predis
 
@@ -53,6 +60,7 @@ RUN php artisan key:generate
 # ポートのエクスポート
 EXPOSE 8000
 EXPOSE 5173
+EXPOSE 9000
 
 # サーバーの起動
 CMD ["php", "artisan", "serve", "--host=0.0.0.0"]

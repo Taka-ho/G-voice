@@ -1,0 +1,22 @@
+.terminal-container {
+  background-color: black;
+  color: white;
+  padding: 10px;
+  font-family: monospace;
+  height: 10vh; /* 高さを固定 */
+  overflow-y: auto; /* スクロール可能にする */
+  white-space: pre-wrap;
+  margin-right: 1%;
+}
+
+.terminal-output {
+  margin-bottom: 10px;
+}
+
+.terminal-input {
+  background-color: black;
+  color: white;
+  border: none;
+  outline: none;
+  width: 100%;
+}
