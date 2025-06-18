@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import './css/Terminal.css';
+import '../css/Terminal.css';
 
 const TerminalComponent = () => {
   const [input, setInput] = useState('');
@@ -9,24 +9,17 @@ const TerminalComponent = () => {
 
   useEffect(() => {
     const socket = new WebSocket('ws://localhost:7070');
-
-    socket.onopen = () => {
-      setWs(socket);
-    };
+    setWs(socket);
 
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.output) {
-        const formattedOutput = message.output.replace(/\r?\n/g, '\n');
-        setOutput((prevOutput) => [...prevOutput, formattedOutput]);
+        setOutput((prevOutput) => [...prevOutput, message.output.replace(/\r?\n/g, '\n')]);
       }
     };
 
-    socket.onclose = () => {
-    };
-
     socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      setOutput((prevOutput) => [...prevOutput, `[WebSocket error]: ${error.message}`]);
     };
 
     return () => {
@@ -42,6 +35,7 @@ const TerminalComponent = () => {
 
   const executeCommand = (command) => {
     if (ws && command.trim()) {
+      ws.send(JSON.stringify({ command }));   // ←サーバー仕様に応じて修正
       setOutput((prevOutput) => [...prevOutput, `> ${command}`]);
     }
   };
@@ -49,19 +43,19 @@ const TerminalComponent = () => {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       executeCommand(input);
-      setInput(''); // 入力欄をクリア
+      setInput('');
     }
   };
 
   return (
-    <div className="terminal-container" ref={outputRef}>
-      <div className="terminal-output">
+    <div className="terminal-container" style={{ height: '100%' }}>
+      <div className="terminal-output" style={{ flex: 1 }}>
         {output.map((line, index) => (
           <div key={index}>{line}</div>
         ))}
       </div>
-      <div>
-        <span>{'>'} </span>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <span style={{ color: '#6cf', marginRight: 5 }}>{'>'}</span>
         <input
           type="text"
           placeholder='コマンドを入力してください'

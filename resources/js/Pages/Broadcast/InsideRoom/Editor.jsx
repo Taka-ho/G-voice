@@ -113,11 +113,22 @@ const EditorComponents = ({ selectedFiles }) => {
     !selectedFileId ||
     !fileContents[selectedFileId]
   ) {
-    return <div className="editor-container">Loading...</div>;
+    return (
+      <div className="editor-no-file" style={{
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#999',
+        fontSize: 18,
+      }}>
+        ファイルを選択してください
+      </div>
+    );
   }
 
   return (
-    <div className="editor-container">
+    <div className="editor-space" style={{ height: '100%' }}>
       <Tabs
         onSelect={handleTabSelect}
         selectedIndex={fileIds.indexOf(selectedFileId)}
@@ -129,10 +140,12 @@ const EditorComponents = ({ selectedFiles }) => {
         </TabList>
         {currentFiles.map(file => (
           <TabPanel key={file.id}>
-            <div className="editor-space">
+            <div style={{ height: 'calc(100% - 40px)' }}>
               <MonacoEditor
                 value={fileContents[file.id]?.content ?? ''}
                 onChange={(value) => handleOnChange(value, file.id)}
+                height="100%"
+                width="100%"
                 language="javascript"
                 options={{ fontSize: 14 }}
               />

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Head } from '@inertiajs/react';
 import FileTree from './FolderTree/FileTree';
+import EditorWithExternalTerminal from './EditorWithExternalTerminal';
 import AudioStreamer from './Header/AudioStreamer';
 import Editor from './Editor';
-import TerminalComponent from './TerminalComponent';
+import TerminalComponent from './Terminal/TerminalComponent';
 import CommentList from './Comment/CommentList';
 import CommentForm from './Comment/CommentForm';
 import Pusher from 'pusher-js';
@@ -111,29 +112,6 @@ const BroadcastRoom = () => {
     };
   }, [broadcastingRoomId]);
 
-  useEffect(() => {
-    if (!treeData) return;
-
-    const findNodeByPath = (node, path) => {
-      if (!node) return null;
-      if (node.path === path) return node;
-      if (Array.isArray(node.children)) {
-        for (let child of node.children) {
-          const found = findNodeByPath(child, path);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    setFileNames(prev =>
-      prev.map(file => {
-        const node = findNodeByPath(treeData, file.path);
-        return node ? { ...file, id: node.id } : file;
-      })
-    );
-  }, [treeData]);
-
   return (
     <div className='all-space'>
       <Head title="配信部屋〜" />
@@ -151,7 +129,6 @@ const BroadcastRoom = () => {
           message="配信を終了しますか？"
           onConfirm={() => {
             setShowAlert(false);
-            // ナビゲーション処理など
           }}
           onCancel={() => setShowAlert(false)}
         />
@@ -164,13 +141,15 @@ const BroadcastRoom = () => {
           fileAndContents={fileAndContents}
           updateFileContents={updateFileContents}
         />
-        <div className='Editor' style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Editor
-            selectedFiles={fileNames}
-            updateFileContents={updateFileContents}
-            updateSelectedFileName={setSelectedFileName}
-          />
-          <TerminalComponent />
+        <div className="editor-terminal-container" style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: 0,
+          height: '100%'
+        }}>
+          <EditorWithExternalTerminal selectedFiles={fileNames} />
         </div>
         <div className="comment-section">
           <CommentList pusherComments={pusherComments} comments={comments} />

@@ -1,24 +1,33 @@
-.terminal-container {
-  background-color: black;
-  color: white;
-  padding: 10px;
-  font-family: monospace;
-  height: 10vh; /* 高さを固定 */
-  overflow-y: auto; /* スクロール可能にする */
-  white-space: pre-wrap;
-  margin-right: 1%;
+.terminal-container, .terminal-area, .ewet-terminal-panel {
+  color: #fff;
+  font-family: "Fira Mono", monospace;
+  height: 100%;
+  min-height: 60px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 0 12px;
+  margin: 0;
 }
 
 .terminal-output {
-  background-color: black;
-  color: white;
-  margin-bottom: 10px;
+  flex: 1;
+  background: none;
+  color: inherit;
+  overflow-y: auto;
+  margin-bottom: 8px;
+  font-size: 1.05em;
 }
 
 .terminal-input {
-  background-color: black;
-  color: white;
+  background-color: #1d1d1d;
+  color: #fff;
   border: none;
   outline: none;
-  width: 100%;
+  width: 96%;
+  font-family: inherit;
+  font-size: 1em;
+  padding: 6px;
+  border-radius: 3px;
+  margin-bottom: 8px;
 }

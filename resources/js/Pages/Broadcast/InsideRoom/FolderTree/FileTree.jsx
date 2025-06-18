@@ -150,7 +150,10 @@ const FileTree = ({ fileNames, setFileNames, updateFileContents }) => {
     });
   };
 
-  if (!treeData) return <div>Loading tree...</div>;
+  if (!treeData) {
+    return <div style={{ color: '#999', textAlign: 'center', marginTop: 32 }}>ファイルツリーを取得中...</div>;
+  }
+  
 
   return (
     <div style={{ overflowY: 'auto' }}>
